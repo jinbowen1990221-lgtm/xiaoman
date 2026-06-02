@@ -5,9 +5,10 @@ import { AIStatusPill } from "@/components/decorative/AIStatusPill";
 import { CoinMascot } from "@/components/decorative/CoinMascot";
 import { HomeWeather } from "@/components/home-weather";
 import { LotteryCard } from "@/components/lottery-card";
+import { TodayNoteText } from "@/components/today-note-text";
 import { getCurrentUser } from "@/lib/auth";
+import { buildDailyNoteFallback } from "@/lib/daily-note";
 import { formatChineseDate, getGreeting } from "@/lib/date";
-import { todayNote } from "@/lib/mock-data";
 import { getRecordsForUser } from "@/lib/mock-user-db";
 import { scoreForRecords } from "@/lib/ai";
 import { emptyLotteryNumbers, generateLotteryNumbers } from "@/lib/lottery";
@@ -86,7 +87,7 @@ export default async function TodayPage() {
             className="relative z-10 mt-5 font-serif text-[20px] font-medium leading-[1.7] text-primary"
             style={{ width: "min(230px, 60%)", wordBreak: "normal", overflowWrap: "anywhere" }}
           >
-            {todayNote.text}
+            <TodayNoteText fallback={buildDailyNoteFallback(records)} />
           </p>
 
           {/* footer row — link on left, possibility circle on right (overlapping cloud) */}
