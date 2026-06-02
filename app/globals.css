@@ -41,14 +41,15 @@
 
 html {
   min-height: 100%;
-  background: var(--bg-base);
+  /* match the page-top colour so the iOS status-bar / overscroll area blends in */
+  background: var(--bg-start);
 }
 
 body {
   min-height: 100%;
   margin: 0;
   background:
-    radial-gradient(circle at 80% 5%, rgba(212, 165, 116, 0.12), transparent 60%),
+    radial-gradient(circle at 80% 16%, rgba(212, 165, 116, 0.10), transparent 58%),
     linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
   color: var(--text-primary);
   font-family: var(--font-sans), "HarmonyOS Sans", "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -392,13 +393,24 @@ textarea {
   animation: sagePulse 2.4s ease-in-out infinite;
 }
 
-@keyframes glowPulse {
+/* Star avatar breathe — gentle scale + a glow that follows the PNG's alpha
+   (drop-shadow), so there is never a square backing box while it animates. */
+.star-breathe {
+  transform-origin: center;
+  animation: starBreathe 3.2s ease-in-out infinite;
+  filter: drop-shadow(0 1px 2px rgba(180, 120, 40, 0.18));
+}
+@keyframes starBreathe {
   0%,
   100% {
-    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 1px 2px rgba(180, 120, 40, 0.18))
+      drop-shadow(0 0 2px rgba(232, 182, 101, 0.25));
   }
   50% {
-    opacity: 0.72;
+    transform: scale(1.07);
+    filter: drop-shadow(0 1px 2px rgba(180, 120, 40, 0.22))
+      drop-shadow(0 0 6px rgba(232, 182, 101, 0.6));
   }
 }
 
@@ -579,6 +591,7 @@ textarea {
   .sage-pulse,
   .heart-pulse,
   .soft-breathe,
+  .star-breathe,
   .stagger-in > * {
     animation: none !important;
   }

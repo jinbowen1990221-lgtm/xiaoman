@@ -4,6 +4,7 @@ import { CalendarDays, History, Mic, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 
 const tabs: { icon: LucideIcon; label: string; href: string }[] = [
   { icon: CalendarDays, label: "今日", href: "/" },
@@ -14,10 +15,34 @@ const tabs: { icon: LucideIcon; label: string; href: string }[] = [
 
 export function TabBar() {
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
+
+  // iOS Safari positions `fixed; bottom:0` behind the bottom toolbar, hiding the
+  // bar. Lift it up by however much the toolbar overlaps the layout viewport so
+  // it always sits just above the browser chrome.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const nav = navRef.current;
+    if (!vv || !nav) return undefined;
+    const update = () => {
+      const overlap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      nav.style.transform = overlap > 1 ? `translateY(${-overlap}px)` : "";
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50"
+      ref={navRef}
+      className="fixed inset-x-0 bottom-0 z-50 will-change-transform"
       style={{
         background: "rgba(255, 251, 243, 0.88)",
         backdropFilter: "blur(20px)",

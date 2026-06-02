@@ -5,23 +5,15 @@ import Link from "next/link";
 function PillInner({ text, interactive }: { text: string; interactive: boolean }) {
   return (
     <>
-      {/* star mascot avatar */}
+      {/* star mascot avatar — the glow is a drop-shadow on the PNG itself, so it
+          follows the star's shape instead of showing a square box while it breathes */}
       <div className="relative h-[28px] w-[28px] shrink-0">
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-[-3px] rounded-full"
-          style={{
-            background: "radial-gradient(circle, rgba(232,182,101,0.34), transparent 65%)",
-            animation: "glowPulse 2.6s ease-in-out infinite"
-          }}
-        />
         <Image
           src="/images/home/star-mascot.png"
           alt=""
           width={800}
           height={800}
-          className="relative h-full w-full object-contain"
-          style={{ filter: "drop-shadow(0 2px 3px rgba(180,120,40,0.18))" }}
+          className="star-breathe relative h-full w-full object-contain"
         />
       </div>
 

@@ -150,7 +150,7 @@ export function RecordComposer() {
 
     const savedContent = body.content;
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 15000);
+    const timeout = window.setTimeout(() => controller.abort(), 10000);
     try {
       const res = await fetch("/api/records", {
         method: "POST",
