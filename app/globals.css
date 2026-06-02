@@ -1,0 +1,588 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "PingFang SC";
+  --font-serif: "Cormorant Garamond";
+  --font-garamond: "Cormorant Garamond";
+  --bg-start: #FAF6EF;
+  --bg-end: #F5EFE3;
+  --bg-base: #F7F0E6;
+  --card-bg: rgba(255, 251, 243, 0.75);
+  --card-deep: rgba(255, 251, 243, 0.72);
+  --card-border: rgba(255, 255, 255, 0.6);
+  --card-shadow: 0 4px 24px rgba(180, 150, 100, 0.08);
+  --accent: #C75D3E;
+  --accent-gold: #D4A574;
+  --accent-amber: #C8954A;
+  --accent-coral: #C75D3E;
+  --accent-sage: #7A9B7E;
+  --accent-light: #D4A574;
+  --accent-deep: #8A5D32;
+  --btn-dark: #2A2520;
+  --ball-red-light: #E0B378;
+  --ball-red-deep: #D4A574;
+  --ball-blue-light: #8DAA90;
+  --ball-blue-deep: #7A9B7E;
+  --ball-green: #7A9B7E;
+  --text-primary: #2A2520;
+  --text-secondary: #8A7E6E;
+  --text-tertiary: #B8AC9A;
+  --divider: rgba(180, 150, 100, 0.12);
+  --border-glass: rgba(255, 255, 255, 0.6);
+  --border-glass-strong: rgba(212, 165, 116, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+
+html {
+  min-height: 100%;
+  background: var(--bg-base);
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background:
+    radial-gradient(circle at 80% 5%, rgba(212, 165, 116, 0.12), transparent 60%),
+    linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+  color: var(--text-primary);
+  font-family: var(--font-sans), "HarmonyOS Sans", "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(180, 150, 100, 0.08) 1px, transparent 0);
+  background-size: 18px 18px;
+  opacity: 0.24;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Soft amber aurora that breathes — adds depth to the cream backdrop */
+body::after {
+  content: "";
+  position: fixed;
+  inset: -10%;
+  background:
+    radial-gradient(40% 30% at 15% 20%, rgba(212, 165, 116, 0.22), transparent 65%),
+    radial-gradient(35% 28% at 85% 75%, rgba(199, 93, 62, 0.10), transparent 60%),
+    radial-gradient(28% 22% at 60% 40%, rgba(122, 155, 126, 0.10), transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+  animation: aurora-breath 14s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-breath {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.9; }
+  100% { transform: translate3d(2%, -1.5%, 0) scale(1.04); opacity: 1; }
+}
+
+/* Golden dust particles drifting (single decorative element rendered in layout) */
+.gold-dust {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.gold-dust::before,
+.gold-dust::after {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  background-image:
+    radial-gradient(1.2px 1.2px at 18% 24%, rgba(212, 165, 116, 0.85), transparent 60%),
+    radial-gradient(1px 1px at 42% 68%, rgba(199, 93, 62, 0.55), transparent 60%),
+    radial-gradient(1.4px 1.4px at 72% 18%, rgba(212, 165, 116, 0.7), transparent 60%),
+    radial-gradient(1px 1px at 88% 82%, rgba(122, 155, 126, 0.5), transparent 60%),
+    radial-gradient(1.2px 1.2px at 24% 88%, rgba(212, 165, 116, 0.6), transparent 60%),
+    radial-gradient(1px 1px at 58% 38%, rgba(199, 93, 62, 0.4), transparent 60%),
+    radial-gradient(1.3px 1.3px at 8% 56%, rgba(212, 165, 116, 0.65), transparent 60%),
+    radial-gradient(1px 1px at 64% 92%, rgba(212, 165, 116, 0.5), transparent 60%);
+  background-size: 520px 520px;
+  animation: dust-drift 80s linear infinite;
+  opacity: 0.85;
+}
+.gold-dust::after {
+  animation-duration: 140s;
+  animation-direction: reverse;
+  background-size: 720px 720px;
+  filter: blur(0.6px);
+  opacity: 0.55;
+}
+@keyframes dust-drift {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-520px, -260px, 0); }
+}
+
+button,
+textarea,
+input {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+textarea {
+  resize: none;
+}
+
+::selection {
+  background: rgba(168, 74, 58, 0.16);
+}
+
+.glass-card,
+.glass-card-deep,
+.glass-card-highlight {
+  position: relative;
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+  border-radius: 28px;
+  box-shadow: var(--card-shadow);
+}
+
+.glass-card-deep {
+  background: var(--card-deep);
+}
+
+.glass-card-highlight {
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+}
+
+.glow-blue,
+.glow-blue-soft {
+  box-shadow: 0 8px 20px rgba(74, 56, 35, 0.06);
+}
+
+/* TODAY'S NOTE card — magical light beam beneath the bottle */
+.today-glow {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(28px);
+  opacity: 0.9;
+  animation: today-glow-breath 6s ease-in-out infinite;
+}
+@keyframes today-glow-breath {
+  0%, 100% { opacity: 0.7; transform: scale(0.96); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+/* Possibility number — slow soft glow */
+.poss-number {
+  text-shadow: 0 0 24px rgba(199, 93, 62, 0.22);
+  animation: poss-breath 5s ease-in-out infinite;
+}
+@keyframes poss-breath {
+  0%, 100% { text-shadow: 0 0 18px rgba(199, 93, 62, 0.18); }
+  50% { text-shadow: 0 0 28px rgba(199, 93, 62, 0.32); }
+}
+
+/* AI status pill — gentle radial highlight that drifts */
+.ai-pill {
+  position: relative;
+  overflow: hidden;
+}
+.ai-pill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%);
+  animation: ai-shimmer 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes ai-shimmer {
+  0%, 100% { transform: translateX(0); opacity: 0; }
+  45% { opacity: 0.85; }
+  85% { transform: translateX(380%); opacity: 0; }
+}
+
+/* Title accent — pure coral colour, no decoration. The eyebrow above carries the context. */
+.ink-underline {
+  display: inline;
+  color: var(--accent-coral);
+  font-weight: inherit;
+}
+
+/* Section eyebrow — small uppercase label with a tiny dot */
+.eyebrow {
+  font-family: var(--font-garamond), serif;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.eyebrow::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(180, 150, 100, 0.5));
+}
+
+/* Staggered enter — applies to children */
+.stagger-in > * {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: stagger-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.stagger-in > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-in > *:nth-child(2) { animation-delay: 0.15s; }
+.stagger-in > *:nth-child(3) { animation-delay: 0.25s; }
+.stagger-in > *:nth-child(4) { animation-delay: 0.35s; }
+.stagger-in > *:nth-child(5) { animation-delay: 0.45s; }
+.stagger-in > *:nth-child(6) { animation-delay: 0.55s; }
+@keyframes stagger-up {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Letter-paper card — slightly textured, like notebook paper */
+.paper-card {
+  position: relative;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 30px, rgba(180,150,100,0.04) 30px 31px),
+    var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: 22px;
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.paper-card::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  bottom: 14px;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, rgba(199, 93, 62, 0.22), transparent);
+  pointer-events: none;
+}
+
+/* Title accent — same as .ink-underline, no extra marks */
+.scribble-underline {
+  display: inline;
+  color: var(--accent-coral);
+  font-weight: inherit;
+}
+
+/* Postal-style date / time stamp */
+.postmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border: 1px dashed rgba(199, 93, 62, 0.45);
+  border-radius: 999px;
+  font-family: var(--font-garamond), serif;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--accent-coral);
+  background: rgba(255, 250, 240, 0.55);
+}
+
+/* Heart-pulse for emotional cues */
+.heart-pulse {
+  animation: heart-beat 2.6s ease-in-out infinite;
+}
+@keyframes heart-beat {
+  0%, 100% { transform: scale(1); }
+  30% { transform: scale(1.12); }
+  60% { transform: scale(0.98); }
+}
+
+/* Possibility ring — cleaner backdrop */
+.poss-ring {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 244, 230, 0.92), rgba(255, 244, 230, 0.45) 65%, rgba(255, 244, 230, 0.0) 80%);
+  border: 1px solid rgba(212, 165, 116, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55), 0 6px 16px rgba(199, 93, 62, 0.08);
+}
+
+/* Coin floating with subtle glow ring */
+.coin-aura {
+  position: relative;
+}
+.coin-aura::before {
+  content: "";
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 165, 116, 0.28), transparent 65%);
+  filter: blur(8px);
+  animation: aura-breath 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes aura-breath {
+  0%, 100% { transform: scale(0.92); opacity: 0.6; }
+  50% { transform: scale(1.08); opacity: 0.95; }
+}
+
+.hud-frame,
+.hud-corner,
+.panel-corner {
+  position: relative;
+}
+
+.hud-frame::before,
+.hud-frame::after,
+.panel-corner::before,
+.panel-corner::after {
+  content: none;
+}
+
+.hud-corner::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 18px;
+  bottom: 18px;
+  width: 3px;
+  border-radius: 999px;
+  background: rgba(168, 74, 58, 0.18);
+}
+
+.hud-corner::after {
+  content: none;
+}
+
+.status-pill {
+  background: rgba(255, 251, 243, 0.78);
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  box-shadow: 0 4px 18px rgba(180, 150, 100, 0.06);
+}
+
+.mascot-float {
+  animation: homeFloat 4s ease-in-out infinite;
+}
+
+.home-float {
+  animation: homeFloat 4s ease-in-out infinite;
+}
+
+.home-float-fast {
+  animation: homeFloat 3s ease-in-out infinite;
+}
+
+.coin-float {
+  animation: coinFloat 4s ease-in-out infinite;
+}
+
+.sage-pulse {
+  animation: sagePulse 2.4s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+
+/* Twinkling star — opacity + scale modulation, like a real twinkle */
+@keyframes starTwinkle {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(0.88) rotate(-3deg);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.08) rotate(3deg);
+    filter: drop-shadow(0 0 8px rgba(232,182,101,0.85));
+  }
+  65% {
+    opacity: 0.78;
+    transform: scale(0.98) rotate(0deg);
+    filter: drop-shadow(0 0 3px rgba(232,182,101,0.5));
+  }
+}
+
+@keyframes homeFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes coinFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(3deg);
+  }
+}
+
+@keyframes sagePulse {
+  0%,
+  100% {
+    box-shadow:
+      0 6px 14px rgba(122, 155, 126, 0.18),
+      0 0 0 0 rgba(212, 165, 116, 0.22),
+      inset 0 1px 1px rgba(255, 255, 255, 0.28);
+  }
+  50% {
+    box-shadow:
+      0 8px 18px rgba(122, 155, 126, 0.2),
+      0 0 0 9px rgba(212, 165, 116, 0.08),
+      inset 0 1px 1px rgba(255, 255, 255, 0.28);
+  }
+}
+
+@layer components {
+  .app-container {
+    @apply relative mx-auto min-h-dvh w-full max-w-app bg-transparent;
+  }
+
+  .page-pad {
+    @apply relative z-10 px-5 pb-24 pt-6;
+  }
+
+  .secondary-page-pad {
+    @apply relative z-10 px-5 pb-8 pt-5;
+  }
+
+  .bob-card {
+    @apply glass-card;
+  }
+
+  .deep-card {
+    @apply glass-card-deep;
+  }
+
+  .bob-button {
+    @apply flex h-[52px] items-center justify-center rounded-[14px] px-4 text-[15px] font-medium;
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, opacity 0.3s ease;
+    will-change: transform;
+  }
+
+  /* soft tactile press — gentle settle, not a snap */
+  .bob-button:active:not(:disabled) {
+    transform: scale(0.965);
+    transition-duration: 0.12s;
+  }
+
+  .bob-button-dark {
+    @apply bob-button text-white;
+    background: var(--btn-dark);
+    border-radius: 14px;
+  }
+
+  .bob-button-light {
+    @apply glass-card text-primary flex h-[52px] items-center justify-center px-4 text-[15px] font-medium;
+    border-radius: 14px;
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, opacity 0.3s ease;
+  }
+  .bob-button-light:active:not(:disabled) {
+    transform: scale(0.965);
+    transition-duration: 0.12s;
+  }
+
+  .meta-label {
+    @apply text-[11px] font-medium tracking-[2px] text-tertiary;
+  }
+
+  .serif-title {
+    @apply font-serif text-primary font-medium leading-snug;
+  }
+
+  .garamond-note {
+    @apply font-garamond text-secondary italic;
+  }
+
+  .pill {
+    @apply inline-flex items-center rounded-[20px] px-3 py-1.5 text-xs text-primary glass-card;
+  }
+
+  .writing-mode-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+}
+
+/* ============================================================
+   Soft, emotional micro-interactions
+   ============================================================ */
+
+/* tappable cards — gentle settle on press */
+.tap-soft {
+  transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.34s ease;
+}
+.tap-soft:active {
+  transform: scale(0.985);
+  transition-duration: 0.12s;
+}
+
+/* gentle rise-in for content that appears */
+@keyframes fadeRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-rise {
+  animation: fadeRise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* slow, calm breathing — for accents that should feel "alive" */
+@keyframes softBreathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.92;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+.soft-breathe {
+  animation: softBreathe 4.5s ease-in-out infinite;
+}
+
+/* Respect reduced-motion: calm everything down for sensitive users */
+@media (prefers-reduced-motion: reduce) {
+  .home-float,
+  .coin-float,
+  .mascot-float,
+  .sage-pulse,
+  .heart-pulse,
+  .soft-breathe,
+  .stagger-in > * {
+    animation: none !important;
+  }
+  * {
+    scroll-behavior: auto !important;
+  }
+}
