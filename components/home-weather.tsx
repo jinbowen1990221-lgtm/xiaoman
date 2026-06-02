@@ -8,6 +8,7 @@ import {
   CloudRain,
   CloudSnow,
   CloudSun,
+  MapPin,
   Sun,
   type LucideIcon
 } from "lucide-react";
@@ -22,7 +23,7 @@ type WeatherData = {
 };
 
 const CACHE_KEY = "xiaoman:weather";
-const CACHE_TTL = 30 * 60 * 1000; // 30 min — don't re-ask location on every visit
+const CACHE_TTL = 30 * 60 * 1000; // 30 min — don't re-locate on every visit
 
 // WMO weather codes → 中文 + icon (open-meteo uses the WMO code set)
 function describe(code: number): { text: string; Icon: LucideIcon } {
@@ -62,25 +63,18 @@ function saveCache(data: WeatherData) {
 
 export function HomeWeather() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [mode, setMode] = useState<"idle" | "loading">("idle");
 
+  // Only read the cache on mount — never auto-prompt for location. A surprise
+  // permission dialog on first load steals the user's first tap elsewhere.
   useEffect(() => {
-    let cancelled = false;
-
-    // 1) Use a fresh cached reading first — this is what stops the location
-    //    prompt/fetch from firing again every time you return to the home page.
     const cached = loadCache();
-    if (cached) {
-      setWeather(cached);
-      return;
-    }
+    if (cached) setWeather(cached);
+  }, []);
 
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setFailed(true);
-      return;
-    }
-
-    // 2) No fresh cache → ask the browser for location once and fetch.
+  function requestWeather() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    setMode("loading");
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -95,7 +89,6 @@ export function HomeWeather() {
               .then((r) => r.json())
               .catch(() => null)
           ]);
-          if (cancelled) return;
           const data: WeatherData = {
             city:
               (geo?.city || geo?.locality || geo?.principalSubdivision || "")
@@ -109,25 +102,31 @@ export function HomeWeather() {
           setWeather(data);
           saveCache(data);
         } catch {
-          if (!cancelled) setFailed(true);
+          // leave the tap-to-enable chip in place so the user can retry
+        } finally {
+          setMode("idle");
         }
       },
-      () => {
-        if (!cancelled) setFailed(true);
-      },
+      () => setMode("idle"),
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 30 * 60 * 1000 }
     );
+  }
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // While locating, show a soft skeleton so the header layout doesn't jump.
+  // Not yet loaded → a small tappable chip. No automatic permission prompt.
   if (!weather) {
-    if (failed) return null;
     return (
-      <div className="h-[68px] w-[150px] shrink-0 animate-pulse rounded-[28px] border border-white/70 bg-[rgba(255,251,243,0.5)]" />
+      <button
+        type="button"
+        onClick={requestWeather}
+        disabled={mode === "loading"}
+        className="flex h-[68px] shrink-0 items-center gap-2 rounded-[28px] border border-white/70 bg-[rgba(255,251,243,0.66)] px-4 text-secondary shadow-[var(--card-shadow)] backdrop-blur-xl"
+        aria-label="查看天气"
+      >
+        <MapPin className="h-5 w-5 shrink-0 text-[var(--accent-amber)]" strokeWidth={1.7} />
+        <span className="text-[13px] font-light leading-tight">
+          {mode === "loading" ? "定位中…" : "看天气"}
+        </span>
+      </button>
     );
   }
 

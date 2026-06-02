@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Bookmark, ChevronRight, Heart, Image as ImageIcon, Mic } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Observation = { title: string; detail: string; hook: string };
 type Theme = { label: string; count: number; quote: string };
@@ -50,6 +50,45 @@ export function HistoryTabs({
   const [active, setActive] = useState<TabKey>("all");
   const empty = records.length === 0 && savedNotes.length === 0;
 
+  // 小满 reads the records and writes an AI letter + emotion scores. Heuristic
+  // summary/curve show instantly; this silently upgrades them. Cached per
+  // record-set so the model is only called when the records actually change.
+  const [ai, setAi] = useState<{ summary?: string; curve?: number[] } | null>(null);
+  useEffect(() => {
+    if (records.length === 0) return;
+    const sig = `${records.length}:${records[0]?.id ?? ""}`;
+    const key = `xiaoman:history-ai:${sig}`;
+    try {
+      const cached = window.localStorage.getItem(key);
+      if (cached) {
+        setAi(JSON.parse(cached));
+        return;
+      }
+    } catch {
+      // fall through to fetch
+    }
+    let cancelled = false;
+    fetch("/api/history-ai")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { summary?: string; curve?: number[] } | null) => {
+        if (cancelled || !d) return;
+        const next = { summary: d.summary, curve: d.curve };
+        setAi(next);
+        try {
+          window.localStorage.setItem(key, JSON.stringify(next));
+        } catch {
+          // ignore
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [records]);
+
+  const shownSummary = ai?.summary ?? summary;
+  const shownCurve = ai?.curve && ai.curve.length >= 2 ? ai.curve : curve;
+
   return (
     <div>
       {/* Tab bar */}
@@ -92,11 +131,11 @@ export function HistoryTabs({
           {empty ? (
             <EmptyAll />
           ) : active === "all" ? (
-            <AllView summary={summary} observations={observations} savedNotes={savedNotes} records={records} onGoTab={setActive} />
+            <AllView summary={shownSummary} observations={observations} savedNotes={savedNotes} records={records} onGoTab={setActive} />
           ) : active === "saved" ? (
             <SavedView savedNotes={savedNotes} />
           ) : active === "noticed" ? (
-            <NoticedView summary={summary} observations={observations} themes={themes} curve={curve} />
+            <NoticedView summary={shownSummary} observations={observations} themes={themes} curve={shownCurve} />
           ) : (
             <JournalView records={records} />
           )}

@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Heart } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { noteResult } from "@/lib/mock-data";
 import { useBobStore } from "@/store/bob-store";
 
@@ -16,13 +16,35 @@ export function NoteResult() {
   const selectedWord = params.get("choice") ?? storedWord ?? "转机";
   const [feedback, setFeedback] = useState<FeedbackType>(null);
   const [busy, setBusy] = useState(false);
+  // null while 小满 is composing the omen from the user's real records
+  const [omen, setOmen] = useState<{ text: string; possibility: number } | null>(null);
 
   const now = new Date();
   const weekdayEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][now.getDay()];
   const todayStamp = `${now.getMonth() + 1} · ${now.getDate()} · ${weekdayEn}`;
 
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/today-omen?choice=${encodeURIComponent(selectedWord)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { text?: string; possibility?: number } | null) => {
+        if (cancelled) return;
+        setOmen(
+          d?.text
+            ? { text: d.text, possibility: d.possibility ?? noteResult.possibility }
+            : { text: noteResult.text, possibility: noteResult.possibility }
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setOmen({ text: noteResult.text, possibility: noteResult.possibility });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedWord]);
+
   function accept() {
-    if (busy) return;
+    if (busy || !omen) return;
     setBusy(true);
     setFeedback("accepted");
     void fetch("/api/notes", {
@@ -30,8 +52,8 @@ export function NoteResult() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         choice: selectedWord,
-        text: noteResult.text,
-        possibility: noteResult.possibility
+        text: omen.text,
+        possibility: omen.possibility
       })
     }).catch(() => undefined);
     window.setTimeout(() => {
@@ -53,14 +75,30 @@ export function NoteResult() {
 
       <article className="bob-card mt-6 p-6">
         <p className="text-right text-[11px] text-secondary">{todayStamp}</p>
-        <p className="mt-5 font-serif text-base font-medium leading-[1.8] text-primary">
-          {noteResult.text}
-        </p>
+        {omen ? (
+          <p className="mt-5 font-serif text-base font-medium leading-[1.8] text-primary">
+            {omen.text}
+          </p>
+        ) : (
+          <p className="mt-5 flex items-center gap-2 font-serif text-base font-medium leading-[1.8] text-secondary">
+            小满在为你翻今天
+            <span className="inline-flex items-center gap-1">
+              {[0, 1, 2].map((i) => (
+                <motion.span
+                  key={i}
+                  className="h-1.5 w-1.5 rounded-full bg-[var(--accent-coral)]"
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.18 }}
+                />
+              ))}
+            </span>
+          </p>
+        )}
         <div className="my-5 border-t border-dashed border-tertiary" />
         <div className="flex items-baseline justify-between">
           <span className="meta-label">POSSIBILITY</span>
           <span className="font-serif text-[32px] font-bold leading-none text-accent">
-            {noteResult.possibility}%
+            {omen ? `${omen.possibility}%` : "··%"}
           </span>
         </div>
       </article>
@@ -77,7 +115,7 @@ export function NoteResult() {
         <button
           type="button"
           onClick={accept}
-          disabled={busy}
+          disabled={busy || !omen}
           className="bob-button-dark disabled:opacity-50"
         >
           收下
