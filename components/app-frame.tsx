@@ -1,6 +1,5 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { TabBar } from "@/components/tab-bar";
@@ -25,18 +24,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
     <div className="app-container">
       {/* Decorative golden dust drifting behind everything */}
       <div className="gold-dust" aria-hidden="true" />
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.main
-          key={pathname}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 4 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-          className="min-h-dvh"
-        >
-          {children}
-        </motion.main>
-      </AnimatePresence>
+      <main className="min-h-dvh">{children}</main>
       {showTabBar ? <TabBar /> : null}
     </div>
   );

@@ -40,8 +40,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="stagger-in flex min-h-dvh flex-col items-center px-6 pb-8 pt-[14vh]">
-      <main className="flex w-full flex-1 flex-col items-center">
+    <div className="stagger-in flex min-h-dvh flex-col items-center px-6 pb-10 pt-[8vh]">
+      <main className="flex w-full flex-col items-center">
         <StarMascot size={120} />
 
         <span className="postmark mt-7">
@@ -87,7 +87,7 @@ export default function LoginPage() {
         ) : null}
       </main>
 
-      <footer className="w-full">
+      <footer className="mt-12 w-full">
         <button
           type="button"
           disabled={!canSubmit}
