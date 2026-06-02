@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { ImagePlus, Mic, Square, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { StarMascot } from "@/components/decorative/StarMascot";
 import { useAudioLevel } from "@/hooks/useAudioLevel";
 import { createSpeechRecognition } from "@/lib/speech";
@@ -26,6 +26,7 @@ export function RecordComposer() {
   const [duration, setDuration] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const timerRef = useRef<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const levels = useAudioLevel(voiceState === "recording");
 
   useEffect(() => {
@@ -57,9 +58,19 @@ export function RecordComposer() {
   );
   const canSubmit = mode === "text" ? text.trim().length > 0 || images.length > 0 : spokenText.trim().length > 0 || images.length > 0;
 
-  function addMockImage() {
+  function pickImages() {
     if (images.length >= 3) return;
-    setImages((current) => [...current, `图 ${current.length + 1}`]);
+    fileInputRef.current?.click();
+  }
+
+  async function handleFiles(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = ""; // let the user re-pick the same photo later
+    if (!files.length) return;
+    const room = Math.max(0, 3 - images.length);
+    const chosen = files.slice(0, room);
+    const dataUrls = await Promise.all(chosen.map(readAsDataUrl));
+    setImages((current) => [...current, ...dataUrls].slice(0, 3));
   }
 
   function changeMode(nextMode: InputMode) {
@@ -290,19 +301,30 @@ export function RecordComposer() {
                   ) : null}
 
                   <div className="mt-5 w-full rounded-[18px] bg-card-deep px-4 py-3">
-                    <p className="text-[11px] tracking-[1px] text-secondary">实时转写</p>
-                    <div className="mt-2 min-h-20 max-h-40 overflow-y-auto text-sm leading-[1.6] text-primary">
-                      {spokenText ? (
-                        <span>
-                          {finalTranscript}
-                          {interimTranscript ? (
-                            <span className="text-secondary">{interimTranscript}...</span>
-                          ) : null}
-                        </span>
-                      ) : (
-                        <span className="text-tertiary">想到什么说什么。不完整也没事。</span>
-                      )}
-                    </div>
+                    <p className="text-[11px] tracking-[1px] text-secondary">
+                      实时转写{voiceState === "recorded" ? " · 可以改" : ""}
+                    </p>
+                    {voiceState === "recording" ? (
+                      <div className="mt-2 min-h-20 max-h-40 overflow-y-auto text-sm leading-[1.6] text-primary">
+                        {spokenText ? (
+                          <span>
+                            {finalTranscript}
+                            {interimTranscript ? (
+                              <span className="text-secondary">{interimTranscript}...</span>
+                            ) : null}
+                          </span>
+                        ) : (
+                          <span className="text-tertiary">想到什么说什么。不完整也没事。</span>
+                        )}
+                      </div>
+                    ) : (
+                      <textarea
+                        value={finalTranscript}
+                        onChange={(event) => setFinalTranscript(event.target.value)}
+                        className="mt-2 min-h-20 max-h-40 w-full resize-none overflow-y-auto border-0 bg-transparent text-sm leading-[1.6] text-primary outline-none placeholder:text-tertiary"
+                        placeholder="想到什么说什么。录完也可以在这里改。"
+                      />
+                    )}
                   </div>
                 </>
               )}
@@ -313,13 +335,20 @@ export function RecordComposer() {
         <div className="mt-4 flex gap-2">
           {images.map((image, index) => (
             <button
-              key={image}
+              key={index}
               type="button"
               onClick={() => setImages((current) => current.filter((_, i) => i !== index))}
-              aria-label={`删除${image}`}
-              className="relative h-12 w-12 rounded-[18px] border border-black/5 bg-card-deep text-xs text-secondary"
+              aria-label={`删除照片 ${index + 1}`}
+              className="relative h-12 w-12 overflow-hidden rounded-[18px] border border-black/5 bg-card-deep"
             >
-              {image}
+              {image.startsWith("data:") || image.startsWith("blob:") ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={image} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="grid h-full w-full place-items-center text-xs text-secondary">
+                  {image}
+                </span>
+              )}
               <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-primary text-card">
                 <X size={10} />
               </span>
@@ -328,14 +357,22 @@ export function RecordComposer() {
           {images.length < 3 ? (
             <button
               type="button"
-              onClick={addMockImage}
+              onClick={pickImages}
               className="glass-card grid h-12 w-12 place-items-center rounded-[18px] border border-dashed border-border-glass-strong text-tertiary"
-              aria-label="加张图"
+              aria-label="从相册添加照片"
             >
               <ImagePlus size={18} strokeWidth={1.4} />
-              <span className="sr-only">加张图</span>
+              <span className="sr-only">从相册添加照片</span>
             </button>
           ) : null}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(event) => void handleFiles(event)}
+          />
         </div>
         {mode === "text" ? (
           <div className="mt-3 flex items-end justify-between">
@@ -401,6 +438,15 @@ export function RecordComposer() {
       </AnimatePresence>
     </div>
   );
+}
+
+function readAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("read-failed"));
+    reader.readAsDataURL(file);
+  });
 }
 
 function formatDuration(totalSeconds: number) {

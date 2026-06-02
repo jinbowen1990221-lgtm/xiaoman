@@ -37,7 +37,6 @@ export function CoinMascot({
         height={1158}
         unoptimized
         className="h-full w-full object-contain"
-        style={{ filter: "drop-shadow(0 6px 12px rgba(180, 150, 100, 0.22))" }}
       />
 
       {engraved ? (

@@ -18,30 +18,28 @@ export const lotteryLabels: Record<LotteryType, string> = {
 
 const narrativeTemplates: Record<LotteryType, string[]> = {
   double_color: [
-    "挑了些带你生日尾数 {lastDigit} 的数字",
-    "你这周常说到“{keyword}”，放进去了。",
-    "一组{adjective}的数字。陪你一周。",
-    "把生日里的 {lastDigit} 留在里面，顺手也放了点{mood}。",
-    "这周偏{mood}，数字也挑得轻一点。"
+    "按你的生日排的，带了尾数 {lastDigit}。下周一换一组。",
+    "一组{adjective}的数字，从你生日里挑的。陪你这一周。",
+    "把生日里的 {lastDigit} 留在里面，图个心安。",
+    "这周给你挑了组{adjective}的，周一会再换。",
+    "顺着你的生日选的，下周一刷新。"
   ],
   super_lotto: [
-    "你这周常说到“{keyword}”，放进去了。",
-    "挑了些带你生日尾数 {lastDigit} 的数字",
-    "前面稳一点，后面留一点小变化。",
-    "一组{adjective}的数字。陪你一周。",
-    "今天先把这些数字放在口袋里。"
+    "按你的生日排的，带了尾数 {lastDigit}。下周一换一组。",
+    "前面稳一点，后面留点小变化。都从你生日里挑的。",
+    "一组{adjective}的数字，陪你这一周。",
+    "把生日尾数 {lastDigit} 放进去了，周一会再换。",
+    "顺着你的生日选的，下周一刷新。"
   ],
   arrangement_3: [
-    "一组{adjective}的数字。陪你一周。",
-    "把生日尾数 {lastDigit} 放进去，其他两个就顺一点。",
-    "这周偏{mood}，三位数也挑得简单。",
-    "你常说到“{keyword}”，就把它放进去了。",
-    "一组简单的数字。陪你一周。"
+    "一组{adjective}的数字，从你生日里挑的。陪你这一周。",
+    "把生日尾数 {lastDigit} 放进去，其他两位就顺一点。",
+    "三位数挑得简单，都顺着你的生日。下周一换。",
+    "按你的生日排的，下周一刷新。",
+    "一组简单的数字，陪你这一周。"
   ]
 };
 
-const moods = ["暖", "静", "轻", "慢", "动"];
-const keywords = ["等待", "工作", "睡眠", "联系", "周末"];
 const adjectives = ["简单", "安静", "偏暖", "不绕弯", "松一点"];
 
 export function generateLotteryNumbers(
@@ -108,12 +106,7 @@ function buildNarrative(type: LotteryType, birthday: string, seed: number) {
 
   return template
     .replace("{lastDigit}", lastDigit)
-    .replace("{mood}", pick(moods, seed))
-    .replace("{keyword}", pick(keywords, seed >>> 2))
-    .replace("{adjective}", pick(adjectives, seed >>> 6))
-    .replace("{style}", "稳")
-    .replace("{count}", String((seed % 3) + 2))
-    .replace("{suggestion}", "陪你一周");
+    .replace("{adjective}", pick(adjectives, seed >>> 6));
 }
 
 function pick(values: string[], seed: number) {

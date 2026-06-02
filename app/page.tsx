@@ -9,6 +9,7 @@ import { formatChineseDate, getGreeting } from "@/lib/date";
 import { demoUser, todayNote } from "@/lib/mock-data";
 import { getRecordsForUser } from "@/lib/mock-user-db";
 import { scoreForRecords } from "@/lib/ai";
+import { emptyLotteryNumbers, generateLotteryNumbers } from "@/lib/lottery";
 
 export default async function TodayPage() {
   const user = await getCurrentUser();
@@ -34,12 +35,13 @@ export default async function TodayPage() {
   const dateLabel = formatChineseDate()
     .replace("日星期", "日 星期")
     .replace(/ · .+$/, " · 今天");
-  const homeLottery = {
-    type: "double_color" as const,
-    reds: [9, 14, 17, 22, 23, 27],
-    blues: [3],
-    narrative: "你这周常说到“周末”，放进去了。"
-  };
+  // Lucky numbers are derived from the user's birthday + the ISO week, so they
+  // stay stable all week and refresh every Monday. No birthday → gentle prompt.
+  const preferredType = user?.preferred_lottery ?? "double_color";
+  const hasBirthday = Boolean(user?.birthday);
+  const homeLottery = hasBirthday
+    ? generateLotteryNumbers(user!.birthday!, user!.id, preferredType)
+    : emptyLotteryNumbers(preferredType);
 
   return (
     <div className="stagger-in relative z-10 pb-28">
@@ -161,7 +163,7 @@ export default async function TodayPage() {
       )}
 
       <div className="mx-6 mt-4">
-        <LotteryCard numbers={homeLottery} empty={false} showMoreLink />
+        <LotteryCard numbers={homeLottery} empty={!hasBirthday} showMoreLink />
       </div>
 
       <Link href="/coin" className="mx-6 mt-4 flex min-h-[88px] items-center gap-4 overflow-hidden rounded-[24px] border border-white/70 bg-[var(--card-bg)] px-5 py-4 shadow-[var(--card-shadow)] backdrop-blur-xl transition-transform duration-300 hover:scale-[1.01]">
