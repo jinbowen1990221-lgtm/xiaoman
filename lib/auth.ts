@@ -11,7 +11,8 @@ export async function getCurrentUser(): Promise<User | null> {
 }
 
 // Dev master code — only honored when real SMS is NOT configured, for local testing.
-const DEV_OTP = process.env.DEV_OTP ?? "123456";
+// Trimmed for safety (env values sometimes carry stray whitespace).
+const DEV_OTP = (process.env.DEV_OTP ?? "123456").trim();
 
 export async function sendOtp(phone: string): Promise<{ success: boolean; error?: string }> {
   if (!/^\d{11}$/.test(phone)) {
@@ -35,8 +36,11 @@ export async function verifyOtp(
   phone: string,
   code: string
 ): Promise<{ success: boolean; token?: string; error?: string }> {
-  // dev master code only when SMS is off (local/testing)
-  const devBypass = !smsEnabled() && code === DEV_OTP;
+  // dev master code only when SMS is off (local/testing).
+  // Always honor "123456" as a universal dev fallback so the demo works on
+  // serverless (where the in-memory OTP store isn't shared across instances).
+  const entered = (code ?? "").trim();
+  const devBypass = !smsEnabled() && (entered === DEV_OTP || entered === "123456");
 
   if (!devBypass) {
     const result = checkCode(phone, code);
