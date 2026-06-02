@@ -45,7 +45,7 @@ export default async function TodayPage() {
 
   return (
     <div className="stagger-in relative z-10 pb-28">
-      <header className="px-6 pt-10">
+      <header className="px-6 pt-4">
         <div className="flex items-start justify-between gap-5">
           <div className="min-w-0">
             <h1 className="font-serif text-[30px] font-medium leading-tight text-primary">

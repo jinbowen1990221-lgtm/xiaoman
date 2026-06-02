@@ -40,7 +40,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="stagger-in flex min-h-dvh flex-col items-center px-6 pb-10 pt-[8vh]">
+    <div className="stagger-in flex min-h-dvh flex-col items-center px-6 pb-10 pt-[4vh]">
       <main className="flex w-full flex-col items-center">
         <StarMascot size={120} />
 

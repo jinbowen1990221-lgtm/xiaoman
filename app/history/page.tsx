@@ -29,7 +29,7 @@ export default async function HistoryPage() {
   });
 
   return (
-    <div className="stagger-in relative z-10 px-6 pb-28 pt-10">
+    <div className="stagger-in relative z-10 px-6 pb-28 pt-4">
       <header>
         <span className="postmark">
           <Heart className="heart-pulse h-3.5 w-3.5 fill-[var(--accent-coral)] text-[var(--accent-coral)]" strokeWidth={1.2} />

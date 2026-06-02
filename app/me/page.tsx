@@ -32,7 +32,7 @@ export default async function MePage() {
 
   return (
     <div className="stagger-in relative z-10 pb-28">
-      <header className="flex items-start justify-between gap-5 px-6 pt-10">
+      <header className="flex items-start justify-between gap-5 px-6 pt-4">
         <div className="min-w-0">
           <p className="eyebrow">PROFILE · 关于你</p>
           <h1 className="mt-3 font-serif text-[30px] font-medium leading-tight text-primary">
