@@ -40,6 +40,22 @@ export function getGreeting(date = new Date()) {
   return "早上好";
 }
 
+export function timeOfDay(date = new Date()) {
+  const hour =
+    Number(
+      new Intl.DateTimeFormat("en-US", {
+        hour: "numeric",
+        hour12: false,
+        timeZone: "Asia/Shanghai"
+      }).format(date)
+    ) % 24;
+
+  if (hour < 5) return "凌晨";
+  if (hour < 12) return "上午";
+  if (hour < 18) return "下午";
+  return "晚上";
+}
+
 export function formatChineseDate(date = new Date()) {
   const formatted = new Intl.DateTimeFormat("zh-CN", {
     year: "numeric",

@@ -2,62 +2,38 @@
 
 import { useEffect, useState } from "react";
 
-const defaultLevels = Array.from({ length: 15 }, () => 0.18);
+const idleLevels = Array.from({ length: 15 }, () => 0.18);
 
+/**
+ * Decorative waveform levels shown while recording.
+ *
+ * Note: this intentionally does NOT call getUserMedia. The speech-recognition
+ * engine already holds the microphone, and opening a *second* mic stream just
+ * to drive these bars triggered an extra permission prompt every time. The bars
+ * are purely decorative, so we animate them synthetically instead — one mic
+ * request total, driven by the speech API alone.
+ */
 export function useAudioLevel(isRecording: boolean): number[] {
-  const [levels, setLevels] = useState(defaultLevels);
+  const [levels, setLevels] = useState(idleLevels);
 
   useEffect(() => {
-    if (!isRecording || typeof navigator === "undefined") {
-      setLevels(defaultLevels);
-      return;
+    if (!isRecording) {
+      setLevels(idleLevels);
+      return undefined;
     }
 
-    let active = true;
-    let frameId = 0;
-    let stream: MediaStream | null = null;
-    let audioContext: AudioContext | null = null;
+    let t = 0;
+    // ~9fps is plenty for a gentle meter and keeps re-renders light.
+    const id = window.setInterval(() => {
+      t += 1;
+      const next = Array.from({ length: 15 }, (_, i) => {
+        const wave = Math.sin(t * 0.5 + i * 0.7) * Math.sin(t * 0.23 + i * 1.3);
+        return Math.max(0.16, 0.42 + 0.4 * Math.abs(wave));
+      });
+      setLevels(next);
+    }, 110);
 
-    async function start() {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        audioContext = new window.AudioContext();
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        const source = audioContext.createMediaStreamSource(stream);
-        source.connect(analyser);
-        const values = new Uint8Array(analyser.frequencyBinCount);
-
-        const tick = () => {
-          if (!active) return;
-          analyser.getByteFrequencyData(values);
-          const bucketSize = Math.max(1, Math.floor(values.length / 15));
-          const next = Array.from({ length: 15 }, (_, index) => {
-            const startIndex = index * bucketSize;
-            const bucket = values.slice(startIndex, startIndex + bucketSize);
-            const average =
-              bucket.reduce((sum, value) => sum + value, 0) / Math.max(1, bucket.length);
-            return Math.max(0.12, average / 255);
-          });
-          setLevels(next);
-          frameId = window.requestAnimationFrame(tick);
-        };
-
-        tick();
-      } catch {
-        setLevels(defaultLevels);
-      }
-    }
-
-    void start();
-
-    return () => {
-      active = false;
-      window.cancelAnimationFrame(frameId);
-      stream?.getTracks().forEach((track) => track.stop());
-      if (audioContext) void audioContext.close();
-      setLevels(defaultLevels);
-    };
+    return () => window.clearInterval(id);
   }, [isRecording]);
 
   return levels;

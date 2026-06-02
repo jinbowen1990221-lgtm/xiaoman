@@ -1,12 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, CloudSun } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { AIStatusPill } from "@/components/decorative/AIStatusPill";
 import { CoinMascot } from "@/components/decorative/CoinMascot";
+import { HomeWeather } from "@/components/home-weather";
 import { LotteryCard } from "@/components/lottery-card";
 import { getCurrentUser } from "@/lib/auth";
 import { formatChineseDate, getGreeting } from "@/lib/date";
-import { demoUser, todayNote } from "@/lib/mock-data";
+import { todayNote } from "@/lib/mock-data";
 import { getRecordsForUser } from "@/lib/mock-user-db";
 import { scoreForRecords } from "@/lib/ai";
 import { emptyLotteryNumbers, generateLotteryNumbers } from "@/lib/lottery";
@@ -56,14 +57,7 @@ export default async function TodayPage() {
             </p>
           </div>
 
-          <div className="flex h-[68px] shrink-0 items-center gap-3 whitespace-nowrap rounded-[28px] border border-white/70 bg-[rgba(255,251,243,0.66)] px-4 shadow-[var(--card-shadow)] backdrop-blur-xl">
-            <CloudSun className="h-7 w-7 shrink-0 text-[var(--accent-amber)]" strokeWidth={1.7} />
-            <span className="shrink-0 text-[22px] font-medium leading-none text-primary">18°</span>
-            <div className="shrink-0">
-              <p className="text-[15px] font-light leading-none text-primary">{demoUser.city}</p>
-              <p className="mt-2 text-[12px] font-light leading-none text-secondary">多云 18°/12°</p>
-            </div>
-          </div>
+          <HomeWeather />
         </div>
       </header>
 

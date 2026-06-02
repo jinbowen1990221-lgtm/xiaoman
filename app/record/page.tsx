@@ -2,7 +2,7 @@ import { Heart } from "lucide-react";
 import { AIStatusPill } from "@/components/decorative/AIStatusPill";
 import { MoodRow } from "@/components/mood-row";
 import { RecordComposer } from "@/components/record-composer";
-import { shortDateLabel } from "@/lib/date";
+import { shortDateLabel, timeOfDay } from "@/lib/date";
 
 export default function RecordPage() {
   return (
@@ -10,7 +10,7 @@ export default function RecordPage() {
       <header>
         <span className="postmark">
           <Heart className="heart-pulse h-3.5 w-3.5 fill-[var(--accent-coral)] text-[var(--accent-coral)]" strokeWidth={1.2} />
-          {shortDateLabel()} · 上午
+          {shortDateLabel()} · {timeOfDay()}
         </span>
         <h1 className="mt-4 font-serif text-[30px] font-medium leading-tight text-primary">
           <span className="scribble-underline">今天</span>想说点什么？
