@@ -1,5 +1,13 @@
 import { getSupabase } from "@/lib/supabase";
-import type { CoinFlip, OnboardingPatch, StoredNote, StoredRecord, User } from "@/lib/user-types";
+import type {
+  CoinFlip,
+  OnboardingPatch,
+  PredictionStatus,
+  StoredNote,
+  StoredPrediction,
+  StoredRecord,
+  User
+} from "@/lib/user-types";
 
 /* ============================================================
    Data access layer.
@@ -14,6 +22,7 @@ const globalForUsers = globalThis as unknown as {
   __bobCoinFlips?: CoinFlip[];
   __bobRecords?: StoredRecord[];
   __bobNotes?: StoredNote[];
+  __bobPredictions?: StoredPrediction[];
 };
 
 const users = globalForUsers.__bobUsers ?? new Map<string, User>();
@@ -24,6 +33,8 @@ const recordsStore = globalForUsers.__bobRecords ?? [];
 globalForUsers.__bobRecords = recordsStore;
 const notesStore = globalForUsers.__bobNotes ?? [];
 globalForUsers.__bobNotes = notesStore;
+const predictionsStore = globalForUsers.__bobPredictions ?? [];
+globalForUsers.__bobPredictions = predictionsStore;
 
 /* ---------------- users ---------------- */
 
@@ -226,4 +237,70 @@ export async function getNotesForUser(userId: string, limit = 50): Promise<Store
     return (data as StoredNote[]) ?? [];
   }
   return notesStore.filter((item) => item.user_id === userId).slice(0, limit);
+}
+
+/* ---------------- predictions (应验闭环) ---------------- */
+
+export async function createPrediction(
+  userId: string,
+  content: string,
+  basis: string
+): Promise<StoredPrediction> {
+  const prediction: StoredPrediction = {
+    id: crypto.randomUUID(),
+    user_id: userId,
+    content,
+    basis,
+    status: "pending",
+    created_at: new Date().toISOString(),
+    verified_at: null
+  };
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb.from("predictions").insert(prediction).select("*").single();
+    return (data as StoredPrediction) ?? prediction;
+  }
+  predictionsStore.unshift(prediction);
+  return prediction;
+}
+
+export async function getPredictionsForUser(
+  userId: string,
+  limit = 30
+): Promise<StoredPrediction[]> {
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb
+      .from("predictions")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    return (data as StoredPrediction[]) ?? [];
+  }
+  return predictionsStore.filter((item) => item.user_id === userId).slice(0, limit);
+}
+
+export async function updatePredictionStatus(
+  id: string,
+  userId: string,
+  status: PredictionStatus
+): Promise<StoredPrediction | null> {
+  const verified_at = new Date().toISOString();
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb
+      .from("predictions")
+      .update({ status, verified_at })
+      .eq("id", id)
+      .eq("user_id", userId)
+      .select("*")
+      .single();
+    return (data as StoredPrediction) ?? null;
+  }
+  const found = predictionsStore.find((p) => p.id === id && p.user_id === userId);
+  if (!found) return null;
+  found.status = status;
+  found.verified_at = verified_at;
+  return found;
 }

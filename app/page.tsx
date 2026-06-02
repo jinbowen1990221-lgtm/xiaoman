@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { AIStatusPill } from "@/components/decorative/AIStatusPill";
 import { CoinMascot } from "@/components/decorative/CoinMascot";
+import { ForesightCard } from "@/components/foresight-card";
 import { HomeWeather } from "@/components/home-weather";
 import { LotteryCard } from "@/components/lottery-card";
 import { TodayNoteText } from "@/components/today-note-text";
@@ -156,6 +157,10 @@ export default async function TodayPage() {
           </span>
         </Link>
       )}
+
+      <div className="mx-6 mt-4">
+        <ForesightCard />
+      </div>
 
       <div className="mx-6 mt-4">
         <LotteryCard numbers={homeLottery} empty={!hasBirthday} showMoreLink />

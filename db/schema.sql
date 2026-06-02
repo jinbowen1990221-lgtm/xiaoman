@@ -69,3 +69,15 @@ create index if not exists coin_flips_user_created_idx on coin_flips (user_id, c
 -- alter table records enable row level security;
 -- create policy "own records" on records for all using (user_id = auth.uid());
 -- （notes / coin_flips 同理）
+
+-- 小满的预感（应验闭环）
+create table if not exists predictions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  content text not null,
+  basis text not null default '',
+  status varchar(10) not null default 'pending' check (status in ('pending','hit','partial','miss')),
+  created_at timestamptz default now(),
+  verified_at timestamptz
+);
+create index if not exists predictions_user_created_idx on predictions (user_id, created_at desc);

@@ -45,6 +45,18 @@ export type StoredNote = {
   created_at: string;
 };
 
+export type PredictionStatus = "pending" | "hit" | "partial" | "miss";
+
+export type StoredPrediction = {
+  id: string;
+  user_id: string;
+  content: string; // the falsifiable prediction
+  basis: string; // grounded reason ("据你说的…")
+  status: PredictionStatus;
+  created_at: string;
+  verified_at: string | null;
+};
+
 export type CoinFlip = {
   id: string;
   user_id: string;
