@@ -42,7 +42,7 @@ export function MoodRow() {
   return (
     <div className="mt-5">
       <p className="eyebrow mb-3">MOOD · 此刻的你</p>
-      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-4 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {MOODS.map((mood) => {
           const active = picked === mood.key;
           const color = active ? "var(--accent-coral)" : "#8A7E6E";

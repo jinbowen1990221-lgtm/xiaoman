@@ -149,12 +149,16 @@ export function RecordComposer() {
           };
 
     const savedContent = body.content;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 15000);
     try {
       const res = await fetch("/api/records", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        signal: controller.signal
       });
+      window.clearTimeout(timeout);
       if (!res.ok) throw new Error("save-failed");
       setSaved(true);
       setReflection(null);
@@ -171,6 +175,7 @@ export function RecordComposer() {
         })
         .catch(() => undefined);
     } catch {
+      window.clearTimeout(timeout);
       setToast("没收住，等一下再交给我？");
     } finally {
       setIsSubmitting(false);
@@ -194,19 +199,11 @@ export function RecordComposer() {
               key={item}
               type="button"
               onClick={() => changeMode(item)}
-              className={`relative overflow-hidden rounded-[20px] px-5 py-2 text-[13px] ${
-                active ? "bg-btn-dark text-white" : "bg-card text-primary"
+              className={`rounded-[20px] px-5 py-2 text-[13px] font-medium transition-colors duration-200 ${
+                active ? "bg-[#2C2824] text-white" : "bg-card text-primary"
               }`}
             >
-              {active ? (
-                <motion.span
-                  layoutId="record-mode-pill"
-                  className="absolute inset-0 rounded-[20px]"
-                  style={{ background: "#2C2824" }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                />
-              ) : null}
-              <span className="relative z-10">{item === "text" ? "打字" : "说话"}</span>
+              {item === "text" ? "打字" : "说话"}
             </button>
           );
         })}
@@ -440,12 +437,38 @@ export function RecordComposer() {
   );
 }
 
-function readAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
+async function readAsDataUrl(file: File): Promise<string> {
+  const raw = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
     reader.onerror = () => reject(new Error("read-failed"));
     reader.readAsDataURL(file);
+  });
+  // Phone photos are several MB. Downscale to a small JPEG so the request body
+  // stays well under serverless limits and the upload feels instant.
+  return downscaleImage(raw, 1024, 0.72);
+}
+
+function downscaleImage(dataUrl: string, maxEdge: number, quality: number): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxEdge / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(dataUrl);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
   });
 }
 
