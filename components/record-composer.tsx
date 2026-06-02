@@ -16,7 +16,9 @@ export function RecordComposer() {
   const [mode, setMode] = useState<InputMode>("text");
   const [images, setImages] = useState<string[]>([]);
   const [text, setText] = useState("");
-  const [saved, setSaved] = useState(false);
+  // idle → (nothing shown) | writing → 小满 is composing | done → reflection shown
+  const [responseState, setResponseState] = useState<"idle" | "writing" | "done">("idle");
+  const [isFresh, setIsFresh] = useState(false);
   const [reflection, setReflection] = useState<{ line: string; question: string } | null>(null);
   const [toast, setToast] = useState("");
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
@@ -34,6 +36,16 @@ export function RecordComposer() {
     const timeout = window.setTimeout(() => setToast(""), 2000);
     return () => window.clearTimeout(timeout);
   }, [toast]);
+
+  // On entering the page, surface the last thing 小满 said back to you.
+  useEffect(() => {
+    const stored = loadStoredReflection();
+    if (stored) {
+      setReflection({ line: stored.line, question: stored.question });
+      setIsFresh(false);
+      setResponseState("done");
+    }
+  }, []);
 
   useEffect(() => {
     if (voiceState !== "recording") {
@@ -84,7 +96,6 @@ export function RecordComposer() {
 
   function startRecording(append = false) {
     setPermissionError("");
-    setSaved(false);
     if (!append) {
       setFinalTranscript("");
       setInterimTranscript("");
@@ -132,7 +143,6 @@ export function RecordComposer() {
   async function submit() {
     if (!canSubmit || isSubmitting) return;
     setIsSubmitting(true);
-    setSaved(false);
     const body =
       mode === "text"
         ? {
@@ -160,33 +170,47 @@ export function RecordComposer() {
       });
       window.clearTimeout(timeout);
       if (!res.ok) throw new Error("save-failed");
-      setSaved(true);
-      setReflection(null);
+      // Record is in. Go straight to the "小满 is writing" state — no separate
+      // "已收下" flash — then swap in the reflection when it arrives.
       if (mode === "text") setText("");
-      // 小满's gentle reflection on what was just written
-      void fetch("/api/reflect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: savedContent })
-      })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data: { line?: string; question?: string } | null) => {
-          if (data?.line) setReflection({ line: data.line, question: data.question ?? "" });
-        })
-        .catch(() => undefined);
+      setReflection(null);
+      setIsFresh(true);
+      setResponseState("writing");
+      setIsSubmitting(false);
+      void composeReflection(savedContent);
     } catch {
       window.clearTimeout(timeout);
       setToast("没收住，等一下再交给我？");
-    } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function composeReflection(content: string) {
+    const fallback = { line: "小满收下了，放进心里了。", question: "" };
+    try {
+      const res = await fetch("/api/reflect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content })
+      });
+      const data = (res.ok ? await res.json() : null) as
+        | { line?: string; question?: string }
+        | null;
+      const refl = data?.line ? { line: data.line, question: data.question ?? "" } : fallback;
+      setReflection(refl);
+      saveStoredReflection(refl);
+    } catch {
+      setReflection(fallback);
+    } finally {
+      setResponseState("done");
     }
   }
 
   function clearAll() {
     setText("");
     setImages([]);
-    setSaved(false);
     resetVoice();
+    // keep the last reflection on screen — only clear the inputs
   }
 
   return (
@@ -393,9 +417,37 @@ export function RecordComposer() {
         </button>
       </div>
 
-      <AnimatePresence>
-        {saved ? (
+      <AnimatePresence mode="wait">
+        {responseState === "writing" ? (
           <motion.div
+            key="writing"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center gap-3 rounded-[18px] border border-white/70 bg-[rgba(255,247,238,0.7)] px-4 py-3.5 shadow-[var(--card-shadow)] backdrop-blur-xl"
+          >
+            <div className="shrink-0">
+              <StarMascot size={34} />
+            </div>
+            <div className="flex min-w-0 items-center gap-2">
+              <p className="font-serif text-[14px] font-medium leading-[1.6] text-primary">
+                小满在写给你的话
+              </p>
+              <span className="flex items-center gap-1">
+                {[0, 1, 2].map((i) => (
+                  <motion.span
+                    key={i}
+                    className="h-1.5 w-1.5 rounded-full bg-[var(--accent-coral)]"
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.18 }}
+                  />
+                ))}
+              </span>
+            </div>
+          </motion.div>
+        ) : responseState === "done" && reflection ? (
+          <motion.div
+            key="done"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
@@ -405,17 +457,24 @@ export function RecordComposer() {
               <StarMascot size={34} />
             </div>
             <div className="min-w-0">
+              {!isFresh ? (
+                <p className="mb-1 font-garamond text-[11px] italic text-tertiary">
+                  上次小满回你的话
+                </p>
+              ) : null}
               <p className="font-serif text-[14px] font-medium leading-[1.6] text-primary">
-                {reflection ? reflection.line : "小满收下了，放进心里了。"}
+                {reflection.line}
               </p>
-              {reflection?.question ? (
+              {reflection.question ? (
                 <p className="mt-1 font-garamond text-[13px] italic leading-[1.6] text-[var(--accent-coral)]">
                   {reflection.question}
                 </p>
               ) : null}
-              <p className="mt-1.5 font-garamond text-[11px] italic text-secondary">
-                明天这个点，我跟你说说我注意到的。
-              </p>
+              {isFresh ? (
+                <p className="mt-1.5 font-garamond text-[11px] italic text-secondary">
+                  明天这个点，我跟你说说我注意到的。
+                </p>
+              ) : null}
             </div>
           </motion.div>
         ) : null}
@@ -435,6 +494,28 @@ export function RecordComposer() {
       </AnimatePresence>
     </div>
   );
+}
+
+const REFLECTION_KEY = "xiaoman:last-reflection";
+
+function saveStoredReflection(refl: { line: string; question: string }) {
+  try {
+    window.localStorage.setItem(REFLECTION_KEY, JSON.stringify(refl));
+  } catch {
+    // storage may be unavailable (private mode) — non-critical
+  }
+}
+
+function loadStoredReflection(): { line: string; question: string } | null {
+  try {
+    const raw = window.localStorage.getItem(REFLECTION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { line?: string; question?: string };
+    if (!parsed?.line) return null;
+    return { line: parsed.line, question: parsed.question ?? "" };
+  } catch {
+    return null;
+  }
 }
 
 async function readAsDataUrl(file: File): Promise<string> {
