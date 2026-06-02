@@ -13,14 +13,16 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-type Weather = {
+type WeatherData = {
   city: string;
   temp: number;
   high: number;
   low: number;
-  text: string;
-  Icon: LucideIcon;
+  code: number;
 };
+
+const CACHE_KEY = "xiaoman:weather";
+const CACHE_TTL = 30 * 60 * 1000; // 30 min — don't re-ask location on every visit
 
 // WMO weather codes → 中文 + icon (open-meteo uses the WMO code set)
 function describe(code: number): { text: string; Icon: LucideIcon } {
@@ -37,17 +39,48 @@ function describe(code: number): { text: string; Icon: LucideIcon } {
   return { text: "多云", Icon: CloudSun };
 }
 
+function loadCache(): WeatherData | null {
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { ts?: number; data?: WeatherData };
+    if (!parsed?.data || !parsed.ts) return null;
+    if (Date.now() - parsed.ts > CACHE_TTL) return null;
+    return parsed.data;
+  } catch {
+    return null;
+  }
+}
+
+function saveCache(data: WeatherData) {
+  try {
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+  } catch {
+    // ignore
+  }
+}
+
 export function HomeWeather() {
-  const [weather, setWeather] = useState<Weather | null>(null);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+
+    // 1) Use a fresh cached reading first — this is what stops the location
+    //    prompt/fetch from firing again every time you return to the home page.
+    const cached = loadCache();
+    if (cached) {
+      setWeather(cached);
+      return;
+    }
+
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setFailed(true);
       return;
     }
 
+    // 2) No fresh cache → ask the browser for location once and fetch.
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -63,20 +96,18 @@ export function HomeWeather() {
               .catch(() => null)
           ]);
           if (cancelled) return;
-          const code = Number(w?.current?.weather_code ?? 1);
-          const { text, Icon } = describe(code);
-          const city =
-            (geo?.city || geo?.locality || geo?.principalSubdivision || "")
-              .toString()
-              .replace(/(市|特别行政区)$/, "") || "你所在地";
-          setWeather({
-            city,
+          const data: WeatherData = {
+            city:
+              (geo?.city || geo?.locality || geo?.principalSubdivision || "")
+                .toString()
+                .replace(/(市|特别行政区)$/, "") || "你所在地",
             temp: Math.round(Number(w?.current?.temperature_2m ?? 0)),
             high: Math.round(Number(w?.daily?.temperature_2m_max?.[0] ?? 0)),
             low: Math.round(Number(w?.daily?.temperature_2m_min?.[0] ?? 0)),
-            text,
-            Icon
-          });
+            code: Number(w?.current?.weather_code ?? 1)
+          };
+          setWeather(data);
+          saveCache(data);
         } catch {
           if (!cancelled) setFailed(true);
         }
@@ -100,7 +131,7 @@ export function HomeWeather() {
     );
   }
 
-  const { Icon } = weather;
+  const { text, Icon } = describe(weather.code);
   return (
     <div className="flex h-[68px] shrink-0 items-center gap-3 whitespace-nowrap rounded-[28px] border border-white/70 bg-[rgba(255,251,243,0.66)] px-4 shadow-[var(--card-shadow)] backdrop-blur-xl">
       <Icon className="h-7 w-7 shrink-0 text-[var(--accent-amber)]" strokeWidth={1.7} />
@@ -110,7 +141,7 @@ export function HomeWeather() {
       <div className="shrink-0">
         <p className="text-[15px] font-light leading-none text-primary">{weather.city}</p>
         <p className="mt-2 text-[12px] font-light leading-none text-secondary">
-          {weather.text} {weather.high}°/{weather.low}°
+          {text} {weather.high}°/{weather.low}°
         </p>
       </div>
     </div>

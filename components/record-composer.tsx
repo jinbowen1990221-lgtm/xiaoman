@@ -160,7 +160,8 @@ export function RecordComposer() {
 
     const savedContent = body.content;
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 10000);
+    // photos add payload + upload time, so give them more room
+    const timeout = window.setTimeout(() => controller.abort(), images.length ? 25000 : 10000);
     try {
       const res = await fetch("/api/records", {
         method: "POST",
@@ -355,25 +356,26 @@ export function RecordComposer() {
 
         <div className="mt-4 flex gap-2">
           {images.map((image, index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => setImages((current) => current.filter((_, i) => i !== index))}
-              aria-label={`删除照片 ${index + 1}`}
-              className="relative h-12 w-12 overflow-hidden rounded-[18px] border border-black/5 bg-card-deep"
-            >
-              {image.startsWith("data:") || image.startsWith("blob:") ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={image} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <span className="grid h-full w-full place-items-center text-xs text-secondary">
-                  {image}
-                </span>
-              )}
-              <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-primary text-card">
-                <X size={10} />
-              </span>
-            </button>
+            <div key={index} className="relative h-12 w-12 shrink-0">
+              <div className="h-full w-full overflow-hidden rounded-[18px] border border-black/5 bg-card-deep">
+                {image.startsWith("data:") || image.startsWith("blob:") ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={image} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="grid h-full w-full place-items-center text-xs text-secondary">
+                    {image}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setImages((current) => current.filter((_, i) => i !== index))}
+                aria-label={`删除照片 ${index + 1}`}
+                className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-primary text-card shadow-[0_2px_6px_rgba(0,0,0,0.25)]"
+              >
+                <X size={11} strokeWidth={2.4} />
+              </button>
+            </div>
           ))}
           {images.length < 3 ? (
             <button
@@ -525,9 +527,9 @@ async function readAsDataUrl(file: File): Promise<string> {
     reader.onerror = () => reject(new Error("read-failed"));
     reader.readAsDataURL(file);
   });
-  // Phone photos are several MB. Downscale to a small JPEG so the request body
-  // stays well under serverless limits and the upload feels instant.
-  return downscaleImage(raw, 1024, 0.72);
+  // Phone photos are several MB. Downscale hard to a small JPEG so the request
+  // body stays tiny — fast upload and well under serverless limits.
+  return downscaleImage(raw, 720, 0.6);
 }
 
 function downscaleImage(dataUrl: string, maxEdge: number, quality: number): Promise<string> {
