@@ -1,8 +1,8 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { StarMascot } from "@/components/decorative/StarMascot";
 import { FixedFooter } from "@/components/onboarding/fixed-footer";
 import { OnboardingShell } from "@/components/onboarding/onboarding-shell";
@@ -10,12 +10,28 @@ import { saveOnboarding } from "@/lib/onboarding-client";
 import { useOnboardingStore } from "@/store/onboarding-store";
 
 export default function OnboardingDonePage() {
+  const router = useRouter();
   const nickname = useOnboardingStore((state) => state.nickname);
-  const [saved, setSaved] = useState(false);
+  const savePromise = useRef<Promise<unknown> | null>(null);
+  const [going, setGoing] = useState<null | "record" | "home">(null);
 
   useEffect(() => {
-    void saveOnboarding({ onboarding_completed: true }).finally(() => setSaved(true));
+    // mark onboarding complete (also refreshes the session cookie)
+    savePromise.current = saveOnboarding({ onboarding_completed: true });
+    void savePromise.current;
   }, []);
+
+  async function go(target: "record" | "home") {
+    if (going) return;
+    setGoing(target);
+    // ensure the cookie is updated before navigating, else middleware bounces back
+    try {
+      await savePromise.current;
+    } catch {
+      // continue anyway
+    }
+    router.replace(target === "record" ? "/record" : "/");
+  }
 
   return (
     <OnboardingShell step={6} hideBack eyebrow="DONE · 都告诉我了">
@@ -43,18 +59,22 @@ export default function OnboardingDonePage() {
       </div>
 
       <FixedFooter>
-        <Link
-          href="/record"
-          className={`bob-button-dark w-full ${saved ? "" : "opacity-60"}`}
+        <button
+          type="button"
+          onClick={() => void go("record")}
+          disabled={going !== null}
+          className="bob-button-dark w-full disabled:opacity-70"
         >
-          去记录今天的一件事
-        </Link>
-        <Link
-          href="/"
-          className="mt-3 flex h-10 items-center justify-center font-garamond text-[13px] italic text-secondary"
+          {going === "record" ? "正在为你准备…" : "去记录今天的一件事"}
+        </button>
+        <button
+          type="button"
+          onClick={() => void go("home")}
+          disabled={going !== null}
+          className="mt-3 flex h-10 w-full items-center justify-center font-garamond text-[13px] italic text-secondary disabled:opacity-50"
         >
-          先看看首页 →
-        </Link>
+          {going === "home" ? "正在进入…" : "先看看首页 →"}
+        </button>
       </FixedFooter>
     </OnboardingShell>
   );

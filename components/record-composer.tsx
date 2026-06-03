@@ -30,6 +30,7 @@ export function RecordComposer({ userId = "anon" }: { userId?: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const timerRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const responseRef = useRef<HTMLDivElement>(null);
   const levels = useAudioLevel(voiceState === "recording");
 
   useEffect(() => {
@@ -37,6 +38,17 @@ export function RecordComposer({ userId = "anon" }: { userId?: string }) {
     const timeout = window.setTimeout(() => setToast(""), 2000);
     return () => window.clearTimeout(timeout);
   }, [toast]);
+
+  // bring 小满's reply into view once it appears (keyboard is already dismissed)
+  useEffect(() => {
+    if (responseState !== "idle") {
+      const t = window.setTimeout(() => {
+        responseRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 250);
+      return () => window.clearTimeout(t);
+    }
+    return undefined;
+  }, [responseState]);
 
   // On entering the page, surface the last thing 小满 said back to you.
   useEffect(() => {
@@ -143,6 +155,10 @@ export function RecordComposer({ userId = "anon" }: { userId?: string }) {
 
   async function submit() {
     if (!canSubmit || isSubmitting) return;
+    // dismiss the keyboard so 小满's reply isn't hidden behind it
+    if (typeof document !== "undefined") {
+      (document.activeElement as HTMLElement | null)?.blur();
+    }
     setIsSubmitting(true);
     const body =
       mode === "text"
@@ -420,6 +436,7 @@ export function RecordComposer({ userId = "anon" }: { userId?: string }) {
         </button>
       </div>
 
+      <div ref={responseRef} className="scroll-mt-24">
       <AnimatePresence mode="wait">
         {responseState === "writing" ? (
           <motion.div
@@ -482,6 +499,7 @@ export function RecordComposer({ userId = "anon" }: { userId?: string }) {
           </motion.div>
         ) : null}
       </AnimatePresence>
+      </div>
 
       <AnimatePresence>
         {toast ? (
