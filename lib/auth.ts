@@ -19,12 +19,12 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; error?
     return { success: false, error: "手机号格式不对" };
   }
 
-  const gate = canSend(phone);
+  const gate = await canSend(phone);
   if (!gate.ok) {
     return { success: false, error: `${gate.waitSec ?? 60} 秒后再试` };
   }
 
-  const code = issueCode(phone);
+  const code = await issueCode(phone);
   const sent = await sendSms(phone, code);
   if (!sent) {
     return { success: false, error: "没发出去，再试一次" };
@@ -43,7 +43,7 @@ export async function verifyOtp(
   const devBypass = !smsEnabled() && (entered === DEV_OTP || entered === "123456");
 
   if (!devBypass) {
-    const result = checkCode(phone, code);
+    const result = await checkCode(phone, code);
     if (result === "expired") return { success: false, error: "验证码过期了，重新发一个" };
     if (result === "too_many") return { success: false, error: "试太多次了，稍后再来" };
     if (result === "mismatch") return { success: false, error: "验证码不对，再试一次" };

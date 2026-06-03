@@ -83,3 +83,12 @@ create table if not exists predictions (
 create index if not exists predictions_user_created_idx on predictions (user_id, created_at desc);
 alter table predictions add column if not exists category varchar(10) not null default 'other';
 alter table predictions add column if not exists confidence integer not null default 55;
+
+-- 短信验证码（serverless 多实例共享，TTL 由应用层判断）
+create table if not exists otp_codes (
+  phone varchar(20) primary key,
+  code varchar(10) not null,
+  expires_at timestamptz not null,
+  attempts integer not null default 0,
+  last_sent_at timestamptz not null default now()
+);
