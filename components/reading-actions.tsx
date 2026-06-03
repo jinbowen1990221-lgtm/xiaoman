@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Heart, Link2, Share2, X } from "lucide-react";
+import { Heart, Share2, X } from "lucide-react";
 import QRCode from "qrcode";
 import { useState } from "react";
 
@@ -19,13 +19,18 @@ export function ReadingActions({ reading, quote }: { reading: string; quote: Quo
     window.setTimeout(() => setToast(""), 2200);
   }
 
-  async function openPopup() {
+  async function makePoster() {
+    const dataUrl = await drawPoster(reading, quote);
+    const blob = await (await fetch(dataUrl)).blob();
+    return { dataUrl, blob };
+  }
+
+  // 留住这一刻 → open the popup with one action: save to album
+  async function openSave() {
     if (busy) return;
     setBusy(true);
     try {
-      const dataUrl = await drawPoster(reading, quote);
-      const blob = await (await fetch(dataUrl)).blob();
-      setPoster({ dataUrl, blob });
+      setPoster(await makePoster());
     } catch {
       flash("生成失败，再试一次");
     } finally {
@@ -33,11 +38,14 @@ export function ReadingActions({ reading, quote }: { reading: string; quote: Quo
     }
   }
 
-  async function shareOrSave() {
-    if (!poster) return;
-    const file = new File([poster.blob], "小满-今日解读.png", { type: "image/png" });
-    const nav = navigator as Navigator & { canShare?: (d: unknown) => boolean };
+  // 分享给懂的人 → straight to the system share sheet (no custom popup)
+  async function systemShare() {
+    if (busy) return;
+    setBusy(true);
     try {
+      const made = await makePoster();
+      const file = new File([made.blob], "小满-今日解读.png", { type: "image/png" });
+      const nav = navigator as Navigator & { canShare?: (d: unknown) => boolean };
       if (nav.share && nav.canShare?.({ files: [file] })) {
         await nav.share({
           files: [file],
@@ -46,27 +54,32 @@ export function ReadingActions({ reading, quote }: { reading: string; quote: Quo
       } else if (nav.share) {
         await nav.share({ text: `${quote.text} —— ${quote.author}${quote.source}`, url: SITE_URL });
       } else {
-        downloadFallback();
+        setPoster(made); // no native share → let them save instead
+        flash("长按图片保存后再分享");
       }
     } catch {
       // user cancelled — ignore
+    } finally {
+      setBusy(false);
     }
   }
 
-  function downloadFallback() {
+  // save the poster: on iOS the share sheet's “存储图像” drops it into Photos
+  async function saveToAlbum() {
     if (!poster) return;
-    const a = document.createElement("a");
-    a.href = poster.dataUrl;
-    a.download = "小满-今日解读.png";
-    a.click();
-  }
-
-  async function copyLink() {
+    const file = new File([poster.blob], "小满-今日解读.png", { type: "image/png" });
+    const nav = navigator as Navigator & { canShare?: (d: unknown) => boolean };
     try {
-      await navigator.clipboard.writeText(SITE_URL);
-      flash("链接已复制，去粘贴给朋友吧");
+      if (nav.share && nav.canShare?.({ files: [file] })) {
+        await nav.share({ files: [file] });
+      } else {
+        const a = document.createElement("a");
+        a.href = poster.dataUrl;
+        a.download = "小满-今日解读.png";
+        a.click();
+      }
     } catch {
-      flash("复制失败，长按链接复制");
+      // cancelled — ignore
     }
   }
 
@@ -75,7 +88,7 @@ export function ReadingActions({ reading, quote }: { reading: string; quote: Quo
       <div className="mt-7 grid grid-cols-2 gap-3">
         <button
           type="button"
-          onClick={() => void openPopup()}
+          onClick={() => void openSave()}
           disabled={busy}
           className="flex h-[48px] items-center justify-center gap-2 rounded-full border border-white/70 bg-[rgba(255,251,243,0.8)] text-[14px] font-medium text-primary shadow-[var(--card-shadow)] backdrop-blur-xl transition-transform active:scale-[0.97] disabled:opacity-50"
         >
@@ -84,7 +97,7 @@ export function ReadingActions({ reading, quote }: { reading: string; quote: Quo
         </button>
         <button
           type="button"
-          onClick={() => void openPopup()}
+          onClick={() => void systemShare()}
           disabled={busy}
           className="flex h-[48px] items-center justify-center gap-2 rounded-full bg-[var(--btn-dark)] text-[14px] font-medium text-white shadow-[0_8px_18px_rgba(42,37,32,0.18)] transition-transform active:scale-[0.97] disabled:opacity-50"
         >
@@ -93,7 +106,7 @@ export function ReadingActions({ reading, quote }: { reading: string; quote: Quo
         </button>
       </div>
 
-      {/* branded popup with the generated poster */}
+      {/* save popup — single action */}
       {poster ? (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[rgba(42,37,32,0.72)] backdrop-blur-sm">
           <button type="button" aria-label="关闭" onClick={() => setPoster(null)} className="absolute inset-0" />
@@ -114,20 +127,19 @@ export function ReadingActions({ reading, quote }: { reading: string; quote: Quo
             <img
               src={poster.dataUrl}
               alt="今日解读"
-              className="mx-auto max-h-[52vh] w-auto rounded-[14px] shadow-[0_10px_30px_rgba(120,80,40,0.25)]"
+              className="mx-auto max-h-[58vh] w-auto rounded-[14px] shadow-[0_10px_30px_rgba(120,80,40,0.25)]"
             />
             <p className="mt-3 text-center font-garamond text-[12px] italic text-tertiary">
               长按图片，可直接存到相册
             </p>
 
-            <div className="mt-4 grid grid-cols-3 gap-2.5">
-              <PopBtn onClick={() => void shareOrSave()} icon={<Download className="h-5 w-5" strokeWidth={1.7} />} label="保存到相册" />
-              <PopBtn onClick={() => void shareOrSave()} icon={<Share2 className="h-5 w-5" strokeWidth={1.7} />} label="发送给朋友" accent />
-              <PopBtn onClick={() => void copyLink()} icon={<Link2 className="h-5 w-5" strokeWidth={1.7} />} label="复制链接" />
-            </div>
-            <p className="mt-3 text-center text-[11px] leading-relaxed text-tertiary">
-              「发送给朋友」会调起系统分享，可选微信、朋友圈等
-            </p>
+            <button
+              type="button"
+              onClick={() => void saveToAlbum()}
+              className="bob-button-dark mt-3 h-[50px] w-full text-[15px]"
+            >
+              保存到相册
+            </button>
           </div>
         </div>
       ) : null}
@@ -141,33 +153,6 @@ export function ReadingActions({ reading, quote }: { reading: string; quote: Quo
   );
 }
 
-function PopBtn({
-  onClick,
-  icon,
-  label,
-  accent
-}: {
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-  accent?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-1.5 rounded-[16px] py-3 text-[12px] font-medium transition-transform active:scale-[0.96] ${
-        accent
-          ? "bg-[var(--accent-coral)] text-white shadow-[0_6px_14px_rgba(199,93,62,0.28)]"
-          : "border border-white/70 bg-[rgba(255,251,243,0.9)] text-primary shadow-[var(--card-shadow)]"
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
-
 /* ---------- canvas poster ---------- */
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -176,6 +161,23 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.onerror = reject;
     img.src = src;
   });
+}
+
+function roundRectPath(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
 }
 
 async function drawPoster(reading: string, quote: Quote): Promise<string> {
@@ -224,35 +226,53 @@ async function drawPoster(reading: string, quote: Quote): Promise<string> {
   ctx.fillText(`— ${quote.author}${quote.source}`, W - pad, y + 28);
   ctx.textAlign = "left";
 
-  // footer: brand bottom-left, QR bottom-right
-  ctx.fillStyle = "#C75D3E";
-  ctx.font = `600 46px ${serif}`;
-  ctx.fillText("小满", pad, H - 158);
-  ctx.fillStyle = "#8A7E6E";
-  ctx.font = `26px ${serif}`;
-  ctx.fillText("一个一直在听你说话的 AI 朋友", pad, H - 116);
-  ctx.fillStyle = "#B8AC9A";
-  ctx.font = `24px ${sans}`;
-  ctx.fillText(SITE, pad, H - 74);
+  /* ----- footer: brand (icon + text) left, QR right — all inside the frame ----- */
+  const footTop = H - 220;
 
+  // brand icon + text to its right
+  try {
+    const icon = await loadImage("/icon-192.png");
+    const s = 92;
+    ctx.save();
+    roundRectPath(ctx, pad, footTop, s, s, 20);
+    ctx.clip();
+    ctx.drawImage(icon, pad, footTop, s, s);
+    ctx.restore();
+    const tx = pad + s + 22;
+    ctx.fillStyle = "#C75D3E";
+    ctx.font = `600 40px ${serif}`;
+    ctx.fillText("小满", tx, footTop + 40);
+    ctx.fillStyle = "#8A7E6E";
+    ctx.font = `24px ${serif}`;
+    ctx.fillText("一个一直在听你说话的 AI 朋友", tx, footTop + 78);
+    ctx.fillStyle = "#B8AC9A";
+    ctx.font = `22px ${sans}`;
+    ctx.fillText(SITE, tx, footTop + 110);
+  } catch {
+    ctx.fillStyle = "#C75D3E";
+    ctx.font = `600 40px ${serif}`;
+    ctx.fillText("小满", pad, footTop + 50);
+  }
+
+  // QR + caption, kept inside the frame (frame bottom is H-44)
   try {
     const qrUrl = await QRCode.toDataURL(SITE_URL, {
       margin: 1,
-      width: 220,
+      width: 240,
       color: { dark: "#2A2520", light: "#FBF6EC" }
     });
     const qr = await loadImage(qrUrl);
-    const qs = 156;
+    const qs = 132;
     const qx = W - pad - qs;
-    const qy = H - 210;
+    const qy = footTop - 6;
     ctx.drawImage(qr, qx, qy, qs, qs);
     ctx.fillStyle = "#B8AC9A";
     ctx.font = `22px ${sans}`;
     ctx.textAlign = "center";
-    ctx.fillText("扫码遇见小满", qx + qs / 2, qy + qs + 28);
+    ctx.fillText("扫码遇见小满", qx + qs / 2, qy + qs + 26);
     ctx.textAlign = "left";
   } catch {
-    // QR optional — poster still works without it
+    // QR optional
   }
 
   return canvas.toDataURL("image/png");
