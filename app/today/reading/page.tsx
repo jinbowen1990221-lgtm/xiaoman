@@ -76,14 +76,9 @@ export default function TodayReadingPage() {
             {/* 小满's distillation + connection */}
             <p className="mt-6 text-[15px] font-light leading-[1.9] text-primary">{data.reading}</p>
 
-            {/* a little book showing the source */}
-            <div className="mt-8 flex justify-center">
-              <BookCover source={data.quote.source} author={data.quote.author} />
-            </div>
-
             {/* the quote, on a "book page" */}
             <article
-              className="relative mt-5 overflow-hidden rounded-l-[6px] rounded-r-[16px] border border-[rgba(180,150,100,0.28)] px-7 py-7"
+              className="relative mt-7 overflow-hidden rounded-l-[6px] rounded-r-[16px] border border-[rgba(180,150,100,0.28)] px-7 py-7"
               style={{
                 background:
                   "repeating-linear-gradient(180deg, transparent 0 33px, rgba(180,150,100,0.06) 33px 34px), #FBF6EC",
@@ -119,42 +114,6 @@ export default function TodayReadingPage() {
           </motion.div>
         )}
       </section>
-    </div>
-  );
-}
-
-/** A small CSS "book" showing the source — a bit of physicality. */
-function BookCover({ source, author }: { source: string; author: string }) {
-  const title = source.replace(/[《》]/g, "");
-  return (
-    <div
-      className="relative h-[128px] w-[94px] shrink-0 rounded-l-[3px] rounded-r-[7px]"
-      style={{
-        transform: "rotate(-4deg)",
-        background: "linear-gradient(135deg, #C75D3E 0%, #A84A3A 100%)",
-        boxShadow: "0 14px 28px rgba(120,55,40,0.32), inset 0 0 0 1px rgba(255,255,255,0.10)"
-      }}
-    >
-      {/* spine highlight */}
-      <span
-        aria-hidden="true"
-        className="absolute inset-y-0 left-0 w-[8px] rounded-l-[3px]"
-        style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.22), transparent)" }}
-      />
-      {/* page edges on the right */}
-      <span
-        aria-hidden="true"
-        className="absolute inset-y-[3px] right-[-3px] w-[3px] rounded-r-[2px]"
-        style={{ background: "repeating-linear-gradient(180deg, #efe6d6 0 2px, #d8ccb8 2px 3px)" }}
-      />
-      <div className="flex h-full flex-col justify-between py-3 pl-4 pr-2.5">
-        <p className="font-serif text-[12.5px] font-medium leading-[1.3] text-[rgba(255,248,240,0.96)]">
-          {title}
-        </p>
-        <p className="font-garamond text-[9.5px] italic leading-tight text-[rgba(255,248,240,0.82)]">
-          {author}
-        </p>
-      </div>
     </div>
   );
 }

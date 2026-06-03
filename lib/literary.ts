@@ -49,7 +49,19 @@ export const QUOTES: Quote[] = [
   { text: "美的事物，对如今的我而言，已经成了怨敌。", author: "三岛由纪夫", source: "《金阁寺》", tones: ["heavy"], themes: ["自己", "感情"] },
   { text: "凌晨四点醒来，发现海棠花未眠。", author: "川端康成", source: "《花未眠》", tones: ["calm", "warm"], themes: ["自己", "睡眠"] },
   { text: "死并非生的对立面，而是作为生的一部分永存。", author: "村上春树", source: "《挪威的森林》", tones: ["heavy", "calm"], themes: ["自己"] },
-  { text: "女性主义，绝不是弱者想变成强者的思想，而是追求弱者也能得到尊重的思想。", author: "上野千鹤子", source: "东京大学入学致辞", tones: ["spark"], themes: ["自己", "工作"] }
+  { text: "女性主义，绝不是弱者想变成强者的思想，而是追求弱者也能得到尊重的思想。", author: "上野千鹤子", source: "东京大学入学致辞", tones: ["spark"], themes: ["自己", "工作"] },
+  { text: "我不再装模作样地拥有很多朋友，而是回到了孤单之中，以真正的我开始了独自的生活。", author: "余华", source: "《在细雨中呼喊》", tones: ["heavy", "calm"], themes: ["自己", "朋友"] },
+  { text: "愿中国青年都摆脱冷气，只是向上走，不必听自暴自弃者流的话。", author: "鲁迅", source: "《热风》", tones: ["spark"], themes: ["自己", "工作"] },
+  { text: "我们再也回不去了。", author: "张爱玲", source: "《半生缘》", tones: ["heavy"], themes: ["感情"] },
+  { text: "不存在十全十美的文章，如同不存在彻头彻尾的绝望。", author: "村上春树", source: "《且听风吟》", tones: ["heavy", "spark"], themes: ["自己", "工作"] },
+  { text: "在人的身上，值得赞赏的东西总是多于应该蔑视的东西。", author: "加缪", source: "《鼠疫》", tones: ["warm", "spark"], themes: ["自己"] },
+  { text: "假如你有幸年轻时在巴黎生活过，那么此后一生中无论你去到哪里，她都与你同在，因为巴黎是一席流动的盛宴。", author: "海明威", source: "《流动的盛宴》", tones: ["warm"], themes: ["自己"] },
+  { text: "“你认为我们这样可以走到什么时候？”——“永生永世。”", author: "加西亚·马尔克斯", source: "《霍乱时期的爱情》", tones: ["warm", "heavy"], themes: ["感情"] },
+  { text: "一个人生命中最大的幸运，莫过于在年富力强时发现了自己的使命。", author: "茨威格", source: "《人类群星闪耀时》", tones: ["spark"], themes: ["自己", "工作"] },
+  { text: "美将拯救世界。", author: "陀思妥耶夫斯基", source: "《白痴》", tones: ["spark", "calm"], themes: ["自己"] },
+  { text: "养成阅读的习惯，等于为自己筑起一个几乎牢不可破的庇护所，逃脱人世间几乎所有的悲哀。", author: "毛姆", source: "《阅读是一座随身携带的避难所》", tones: ["calm", "warm"], themes: ["自己"] },
+  { text: "穿过县境上长长的隧道，便是雪国。夜空下，一片白茫茫。", author: "川端康成", source: "《雪国》", tones: ["calm"], themes: ["自己"] },
+  { text: "每一个不曾起舞的日子，都是对生命的辜负。", author: "尼采", source: "《查拉图斯特拉如是说》", tones: ["spark", "warm"], themes: ["自己", "累"] }
 ];
 
 /** Pick the most resonant quote for the user's recent diary (deterministic per seed). */
