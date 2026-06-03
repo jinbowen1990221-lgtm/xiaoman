@@ -143,13 +143,16 @@ export default async function TodayPage() {
           />
           <h2
             className="relative z-10 mt-5 font-serif text-[22px] font-medium leading-[1.6] text-primary"
-            style={{ width: "min(220px, 62%)" }}
+            style={{ width: "min(230px, 64%)" }}
           >
-            我们才<span className="text-[var(--accent-coral)]">刚认识</span>，<br />
-            先跟我说说今天？
+            先跟我说说<span className="text-[var(--accent-coral)]">今天</span>，<br />
+            剩下的交给我。
           </h2>
-          <p className="relative z-10 mt-3 font-garamond text-[13px] italic text-secondary">
-            一句话也行，我会记住。
+          <p
+            className="relative z-10 mt-3 text-[13px] font-light leading-6 text-secondary"
+            style={{ width: "min(250px, 66%)" }}
+          >
+            你记下的每一天，都会变成我读懂你、<span className="text-[var(--accent-deep)]">预感你明天</span>的线索。
           </p>
           <span className="relative z-10 mt-6 inline-flex items-center gap-1.5 border-b border-[rgba(180,150,100,0.40)] pb-1 text-[14px] font-light text-primary transition-colors group-hover:border-[var(--accent-coral)] group-hover:text-[var(--accent-coral)]">
             去记下第一笔

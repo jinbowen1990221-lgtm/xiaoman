@@ -66,30 +66,44 @@ export function emotionCurve(records: StoredRecord[], n = 7): number[] {
 
 export type Reflection = { line: string; question: string; tone: Tone };
 
+// emotional venting → comfort (no interrogation); the second line is companionship.
 const REFLECTIONS: Record<Tone, { line: string; question: string }[]> = {
   heavy: [
-    { line: "这一条有点沉，我先接着。你不用现在就想明白。", question: "如果只留一个词形容此刻，会是哪个？" },
-    { line: "听起来今天不太轻松。说出来了，就先放下一点。", question: "有没有一件小事，今天还算撑住了你？" }
+    { line: "这一条有点沉，我先接着。你不用现在就想明白。", question: "别急，慢慢来，我一直在。" },
+    { line: "听起来今天不太轻松。能说出来，已经很好了。", question: "先歇一会儿，这股累会慢慢散的。" }
   ],
   warm: [
-    { line: "这种舒服的瞬间，值得被记下来。", question: "今天是什么，让它变好了一点？" },
-    { line: "我也跟着松了口气。", question: "想把这点暖，留给明天的自己一句什么话？" }
+    { line: "这种舒服的瞬间，值得被记下来。", question: "把这点暖留着，明天会更容易找回来。" },
+    { line: "我也跟着松了口气，真为你高兴。", question: "今天的你，挺好的。" }
   ],
   spark: [
-    { line: "这个念头有点亮，别让它溜走。", question: "如果只动一步，你想先从哪开始？" },
-    { line: "我记下了，这个想法不轻。", question: "它让你想起过什么吗？" }
+    { line: "这个念头有点亮，别让它溜走。", question: "先别评判它，让它在心里多待一会儿。" },
+    { line: "我记下了，这个想法不轻。", question: "想做的话，挑最小的一步先开始。" }
   ],
   calm: [
-    { line: "嗯，我听到了。", question: "还有没说完的吗？一句也行。" },
-    { line: "平平淡淡的一天，也是一天。", question: "今天有什么，是你不想忘记的？" }
+    { line: "嗯，我听到了。", question: "平平淡淡也是一天，我陪着你。" },
+    { line: "今天就这样过着，也挺好。", question: "我都记着了。" }
   ]
 };
 
+// concrete problem / 纠结 → acknowledge + a small actionable nudge (not a probe).
+const PROBLEM_REPLIES: { line: string; question: string }[] = [
+  { line: "听起来你卡在一件具体的事上了。", question: "先把它拆小：今天只动最容易的那一步，就够了。" },
+  { line: "这件事确实让人犯难，我懂。", question: "试着写下两个选择，分别想象选完的明天——哪个更让你踏实？" },
+  { line: "别一个人硬扛着想。", question: "先定个最小目标：今天先弄清一个最关键的点就好。" }
+];
+
+const PROBLEM_RE = /怎么办|怎么做|要不要|该不该|该怎么|如何|纠结|选哪|不知道(该|怎)|求助|帮我想|帮我看|\?|？/;
+
 export function buildReflection(text: string): Reflection {
-  const { tone } = analyzeSentiment(text);
+  const t = text ?? "";
+  const { tone } = analyzeSentiment(t);
+  if (PROBLEM_RE.test(t)) {
+    const pick = PROBLEM_REPLIES[t.length % PROBLEM_REPLIES.length];
+    return { line: pick.line, question: pick.question, tone };
+  }
   const pool = REFLECTIONS[tone];
-  // deterministic pick by text length so it's stable per content
-  const pick = pool[(text?.length ?? 0) % pool.length];
+  const pick = pool[t.length % pool.length];
   return { line: pick.line, question: pick.question, tone };
 }
 
