@@ -166,7 +166,13 @@ export default async function TodayPage() {
       </div>
 
       <div className="mx-6 mt-4">
-        <LotteryCard numbers={homeLottery} empty={!hasBirthday} showMoreLink />
+        {hasBirthday ? (
+          <LotteryCard numbers={homeLottery} empty={false} showMoreLink />
+        ) : (
+          <Link href="/me/birthday" className="block">
+            <LotteryCard numbers={homeLottery} empty showMoreLink={false} />
+          </Link>
+        )}
       </div>
 
       <Link href="/coin" className="mx-6 mt-4 flex min-h-[88px] items-center gap-4 overflow-hidden rounded-[24px] border border-white/70 bg-[var(--card-bg)] px-5 py-4 shadow-[var(--card-shadow)] backdrop-blur-xl transition-transform duration-300 hover:scale-[1.01]">

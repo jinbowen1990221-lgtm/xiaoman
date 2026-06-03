@@ -19,7 +19,7 @@ export function LotterySelector({
 
   async function chooseLottery(type: LotteryType) {
     if (requiresBirthday) {
-      router.push("/me");
+      router.push("/me/birthday");
       return;
     }
 

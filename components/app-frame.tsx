@@ -14,6 +14,7 @@ const secondaryRoutes = [
   "/login",
   "/onboarding",
   "/settings",
+  "/me/birthday",
   "/history/record",
   "/history/note"
 ];

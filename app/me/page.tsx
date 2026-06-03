@@ -1,4 +1,4 @@
-import { ChevronRight, Heart, Settings } from "lucide-react";
+import { Cake, ChevronRight, Heart, Settings } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CompanionCard } from "@/components/companion-card";
@@ -71,6 +71,21 @@ export default async function MePage() {
           </div>
         </div>
       </section>
+
+      {/* set / edit birthday — unlocks the birthday-based lucky numbers */}
+      <Link
+        href="/me/birthday"
+        className="mx-6 mt-4 flex w-[calc(100%-3rem)] items-center justify-between gap-3 rounded-[18px] border border-white/70 bg-[var(--card-bg)] px-5 py-3.5 text-left shadow-[var(--card-shadow)] backdrop-blur-xl transition-transform active:scale-[0.99]"
+      >
+        <span className="flex items-center gap-3 text-[14px] text-primary">
+          <Cake className="h-4 w-4 text-[var(--accent-coral)]" strokeWidth={1.7} />
+          生日
+        </span>
+        <span className="flex items-center gap-1.5 text-[13px] font-light text-secondary">
+          {user.birthday ?? "去设置 · 解锁幸运号"}
+          <ChevronRight className="h-4 w-4 text-tertiary" strokeWidth={1.5} />
+        </span>
+      </Link>
 
       {/* prominent: guide to add 小满 to the home screen */}
       <CompanionCard />
