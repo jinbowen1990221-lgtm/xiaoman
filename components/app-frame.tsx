@@ -8,6 +8,7 @@ import { TabBar } from "@/components/tab-bar";
 const secondaryRoutes = [
   "/today/open",
   "/today/note",
+  "/today/reading",
   "/coin",
   "/lottery",
   "/login",

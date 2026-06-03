@@ -94,7 +94,7 @@ export default async function TodayPage() {
           {/* footer row — link on left, possibility circle on right (overlapping cloud) */}
           <div className="relative z-10 mt-6 flex items-center justify-between gap-4">
             <Link
-              href="/today/open"
+              href="/today/reading"
               className="group/link inline-flex items-center gap-1.5 border-b border-[rgba(180,150,100,0.40)] pb-1 text-[14px] font-light text-primary transition-colors hover:border-[var(--accent-coral)] hover:text-[var(--accent-coral)]"
             >
               查看今日解读
