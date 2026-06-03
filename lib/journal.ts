@@ -1,3 +1,4 @@
+import { beijingParts } from "@/lib/date";
 import type { StoredRecord } from "@/lib/user-types";
 
 export type DisplayRecord = {
@@ -25,7 +26,7 @@ function timeOfDay(hour: number) {
 }
 
 export function toDisplayRecord(r: StoredRecord): DisplayRecord {
-  const d = new Date(r.created_at);
+  const p = beijingParts(r.created_at);
   const text = r.content.trim();
   const firstLine = text.split("\n").find((line) => line.trim()) ?? text;
   const preview = firstLine.length > 22 ? `${firstLine.slice(0, 22)}…` : firstLine;
@@ -40,11 +41,11 @@ export function toDisplayRecord(r: StoredRecord): DisplayRecord {
 
   return {
     id: r.id,
-    date: `${d.getMonth() + 1} 月 ${d.getDate()} 日`,
-    weekday: WEEKDAYS[d.getDay()],
-    timeOfDay: timeOfDay(d.getHours()),
-    month: d.getMonth() + 1,
-    day: d.getDate(),
+    date: `${p.month} 月 ${p.day} 日`,
+    weekday: WEEKDAYS[p.weekday],
+    timeOfDay: timeOfDay(p.hour),
+    month: p.month,
+    day: p.day,
     count,
     preview: preview || "（没写文字）",
     text: text || "（这条没有文字）",
@@ -84,7 +85,7 @@ export function buildObservations(records: StoredRecord[]): Observation[] {
 
   // 2) time-of-day pattern (grounded in created_at)
   const lateNight = records.filter((r) => {
-    const h = new Date(r.created_at).getHours();
+    const h = beijingParts(r.created_at).hour;
     return h >= 23 || h < 5;
   }).length;
   if (lateNight >= 2) {

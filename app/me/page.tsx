@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { CompanionCard } from "@/components/companion-card";
 import { LogoutButton } from "@/components/logout-button";
 import { getCurrentUser } from "@/lib/auth";
+import { beijingDay } from "@/lib/date";
 import { getRecordsForUser } from "@/lib/mock-user-db";
 import { maskPhone } from "@/lib/phone";
 
@@ -23,9 +24,7 @@ export default async function MePage() {
   // real stats from stored records
   const stored = await getRecordsForUser(user.id);
   const memories = stored.length;
-  const recordDays = new Set(
-    stored.map((r) => new Date(r.created_at).toDateString())
-  ).size;
+  const recordDays = new Set(stored.map((r) => beijingDay(r.created_at))).size;
   const companionDays = Math.max(
     1,
     Math.ceil((Date.now() - new Date(user.created_at).getTime()) / 86400000)

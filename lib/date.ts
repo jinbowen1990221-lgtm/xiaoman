@@ -40,6 +40,49 @@ export function getGreeting(date = new Date()) {
   return "早上好";
 }
 
+const WEEKDAY_INDEX: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6
+};
+
+/**
+ * Extract date/time parts of an instant in Beijing time. Records are stored as
+ * UTC ISO strings; using Date.getHours()/getDate() reads them in the runtime's
+ * timezone (UTC on Vercel), which made a 9am-Beijing entry show as "深夜".
+ */
+export function beijingParts(input: Date | string) {
+  const d = typeof input === "string" ? new Date(input) : input;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+    weekday: "short"
+  }).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return {
+    year: Number(get("year")),
+    month: Number(get("month")),
+    day: Number(get("day")),
+    hour: Number(get("hour")) % 24,
+    weekday: WEEKDAY_INDEX[get("weekday")] ?? 0
+  };
+}
+
+/** Beijing-day key like "2026-06-03", for "same day?" comparisons. */
+export function beijingDay(input: Date | string = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai" }).format(
+    typeof input === "string" ? new Date(input) : input
+  );
+}
+
 export function timeOfDay(date = new Date()) {
   const hour =
     Number(

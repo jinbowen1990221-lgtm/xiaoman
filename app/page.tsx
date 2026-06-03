@@ -9,7 +9,7 @@ import { LotteryCard } from "@/components/lottery-card";
 import { TodayNoteText } from "@/components/today-note-text";
 import { getCurrentUser } from "@/lib/auth";
 import { buildDailyNoteFallback } from "@/lib/daily-note";
-import { formatChineseDate, getGreeting } from "@/lib/date";
+import { beijingDay, formatChineseDate, getGreeting } from "@/lib/date";
 import { getRecordsForUser } from "@/lib/mock-user-db";
 import { scoreForRecords } from "@/lib/ai";
 import { emptyLotteryNumbers, generateLotteryNumbers } from "@/lib/lottery";
@@ -22,8 +22,8 @@ export default async function TodayPage() {
   const latest = records[0];
 
   // 今日趋势 from real sentiment (today's records, else recent)
-  const todayStr = new Date().toDateString();
-  const todayRecords = records.filter((r) => new Date(r.created_at).toDateString() === todayStr);
+  const todayStr = beijingDay();
+  const todayRecords = records.filter((r) => beijingDay(r.created_at) === todayStr);
   const trend = scoreForRecords(todayRecords.length ? todayRecords : records);
   const latestQuote = latest
     ? (() => {

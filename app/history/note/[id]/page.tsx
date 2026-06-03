@@ -2,15 +2,16 @@ import { ArrowLeft, Bookmark } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { beijingParts } from "@/lib/date";
 import { getNotesForUser } from "@/lib/mock-user-db";
 
 export default async function NoteDetailPage({ params }: { params: { id: string } }) {
   const user = await getCurrentUser();
   const stored = user ? (await getNotesForUser(user.id)).find((n) => n.id === params.id) : undefined;
   if (!stored) notFound();
-  const d = new Date(stored.created_at);
+  const p = beijingParts(stored.created_at);
   const note = {
-    date: `${d.getMonth() + 1} 月 ${d.getDate()} 日`,
+    date: `${p.month} 月 ${p.day} 日`,
     choice: stored.choice,
     text: stored.text,
     possibility: stored.possibility

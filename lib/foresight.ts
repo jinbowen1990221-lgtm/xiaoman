@@ -1,4 +1,5 @@
 import { analyzeSentiment } from "@/lib/ai";
+import { beijingParts } from "@/lib/date";
 import type { PredictionCategory, StoredRecord } from "@/lib/user-types";
 
 export type DraftPrediction = {
@@ -38,7 +39,7 @@ export function buildForesightFallback(records: StoredRecord[]): DraftPrediction
   }
   const latest = records[0];
   const lateNight = records.filter((r) => {
-    const h = new Date(r.created_at).getHours();
+    const h = beijingParts(r.created_at).hour;
     return h >= 23 || h < 5;
   }).length;
 

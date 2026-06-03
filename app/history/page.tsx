@@ -1,5 +1,6 @@
 import { Heart } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
+import { beijingParts } from "@/lib/date";
 import { buildThemes, emotionCurve } from "@/lib/ai";
 import { buildObservations, buildSummary, toDisplayRecord } from "@/lib/journal";
 import { getNotesForUser, getRecordsForUser } from "@/lib/mock-user-db";
@@ -18,10 +19,10 @@ export default async function HistoryPage() {
   const themes = buildThemes(stored);
   const curve = emotionCurve(stored);
   const savedNotes = notes.map((n) => {
-    const d = new Date(n.created_at);
+    const p = beijingParts(n.created_at);
     return {
       id: n.id,
-      date: `${d.getMonth() + 1} 月 ${d.getDate()} 日`,
+      date: `${p.month} 月 ${p.day} 日`,
       choice: n.choice,
       text: n.text,
       possibility: n.possibility
