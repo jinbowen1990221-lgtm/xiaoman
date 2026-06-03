@@ -12,11 +12,11 @@ function todayKey() {
  * silently upgrades to the AI-written version and caches it for the day, so the
  * model is called at most once per day per device.
  */
-export function TodayNoteText({ fallback }: { fallback: string }) {
+export function TodayNoteText({ fallback, userId }: { fallback: string; userId: string }) {
   const [text, setText] = useState(fallback);
 
   useEffect(() => {
-    const key = `xiaoman:today-note:${todayKey()}`;
+    const key = `xiaoman:today-note:${userId}:${todayKey()}`;
     try {
       const cached = window.localStorage.getItem(key);
       if (cached) {
@@ -44,7 +44,7 @@ export function TodayNoteText({ fallback }: { fallback: string }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [userId]);
 
   return <>{text}</>;
 }

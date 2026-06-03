@@ -12,7 +12,8 @@ type VoiceState = "idle" | "recording" | "recorded";
 
 const speech = createSpeechRecognition();
 
-export function RecordComposer() {
+export function RecordComposer({ userId = "anon" }: { userId?: string }) {
+  const reflectionKey = `${REFLECTION_KEY}:${userId}`;
   const [mode, setMode] = useState<InputMode>("text");
   const [images, setImages] = useState<string[]>([]);
   const [text, setText] = useState("");
@@ -39,13 +40,13 @@ export function RecordComposer() {
 
   // On entering the page, surface the last thing 小满 said back to you.
   useEffect(() => {
-    const stored = loadStoredReflection();
+    const stored = loadStoredReflection(reflectionKey);
     if (stored) {
       setReflection({ line: stored.line, question: stored.question });
       setIsFresh(false);
       setResponseState("done");
     }
-  }, []);
+  }, [reflectionKey]);
 
   useEffect(() => {
     if (voiceState !== "recording") {
@@ -199,7 +200,7 @@ export function RecordComposer() {
         | null;
       const refl = data?.line ? { line: data.line, question: data.question ?? "" } : fallback;
       setReflection(refl);
-      saveStoredReflection(refl);
+      saveStoredReflection(reflectionKey, refl);
     } catch {
       setReflection(fallback);
     } finally {
@@ -500,17 +501,17 @@ export function RecordComposer() {
 
 const REFLECTION_KEY = "xiaoman:last-reflection";
 
-function saveStoredReflection(refl: { line: string; question: string }) {
+function saveStoredReflection(key: string, refl: { line: string; question: string }) {
   try {
-    window.localStorage.setItem(REFLECTION_KEY, JSON.stringify(refl));
+    window.localStorage.setItem(key, JSON.stringify(refl));
   } catch {
     // storage may be unavailable (private mode) — non-critical
   }
 }
 
-function loadStoredReflection(): { line: string; question: string } | null {
+function loadStoredReflection(key: string): { line: string; question: string } | null {
   try {
-    const raw = window.localStorage.getItem(REFLECTION_KEY);
+    const raw = window.localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as { line?: string; question?: string };
     if (!parsed?.line) return null;

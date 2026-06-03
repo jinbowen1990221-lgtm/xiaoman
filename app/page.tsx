@@ -88,7 +88,7 @@ export default async function TodayPage() {
             className="relative z-10 mt-5 font-serif text-[20px] font-medium leading-[1.7] text-primary"
             style={{ width: "min(230px, 60%)", wordBreak: "normal", overflowWrap: "anywhere" }}
           >
-            <TodayNoteText fallback={buildDailyNoteFallback(records)} />
+            <TodayNoteText fallback={buildDailyNoteFallback(records)} userId={user?.id ?? "anon"} />
           </p>
 
           {/* footer row — link on left, possibility circle on right (overlapping cloud) */}

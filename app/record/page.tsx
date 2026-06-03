@@ -2,9 +2,11 @@ import { Heart } from "lucide-react";
 import { AIStatusPill } from "@/components/decorative/AIStatusPill";
 import { MoodRow } from "@/components/mood-row";
 import { RecordComposer } from "@/components/record-composer";
+import { getCurrentUser } from "@/lib/auth";
 import { shortDateLabel, timeOfDay } from "@/lib/date";
 
-export default function RecordPage() {
+export default async function RecordPage() {
+  const user = await getCurrentUser();
   return (
     <div className="stagger-in relative z-10 px-6 pb-36 pt-4">
       <header>
@@ -26,7 +28,7 @@ export default function RecordPage() {
 
       <MoodRow />
 
-      <RecordComposer />
+      <RecordComposer userId={user?.id ?? "anon"} />
     </div>
   );
 }

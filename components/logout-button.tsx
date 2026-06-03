@@ -10,6 +10,14 @@ export function LogoutButton() {
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     reset();
+    // clear per-user client caches so the next account doesn't see stale data
+    try {
+      Object.keys(window.localStorage)
+        .filter((k) => k.startsWith("xiaoman:"))
+        .forEach((k) => window.localStorage.removeItem(k));
+    } catch {
+      // ignore
+    }
     router.replace("/login");
   }
 
