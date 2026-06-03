@@ -6,9 +6,6 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const KEY = "xiaoman:a2hs";
-const SNOOZE = 7 * 24 * 3600 * 1000; // don't nag again for a week after dismiss
-
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: string }>;
@@ -34,31 +31,14 @@ export function InstallPrompt() {
     };
     window.addEventListener("beforeinstallprompt", onBIP);
 
-    // manual trigger (from the "让小满一直陪伴你" card) — always works
+    // The guide is shown ONLY on demand — from the "让小满一直陪伴你" card in
+    // 个人中心. No auto-popup for first-time users.
     const onManual = () => setShow(true);
     window.addEventListener("xiaoman:show-install", onManual);
-
-    // auto-show: only when on mobile, not already installed, and not snoozed
-    const standalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
-    let snoozed = false;
-    try {
-      const t = Number(window.localStorage.getItem(KEY) || 0);
-      snoozed = Boolean(t && Date.now() - t < SNOOZE);
-    } catch {
-      // ignore
-    }
-    const isMobile = android || /iphone|ipad|ipod/i.test(ua);
-    let timer: number | undefined;
-    if (isMobile && !standalone && !snoozed) {
-      timer = window.setTimeout(() => setShow(true), 2600);
-    }
 
     return () => {
       window.removeEventListener("beforeinstallprompt", onBIP);
       window.removeEventListener("xiaoman:show-install", onManual);
-      if (timer) window.clearTimeout(timer);
     };
   }, []);
 
@@ -67,11 +47,6 @@ export function InstallPrompt() {
 
   function dismiss() {
     setShow(false);
-    try {
-      window.localStorage.setItem(KEY, String(Date.now()));
-    } catch {
-      // ignore
-    }
   }
 
   async function androidInstall() {
