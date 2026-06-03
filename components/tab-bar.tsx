@@ -4,7 +4,6 @@ import { CalendarDays, History, Mic, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
 
 const tabs: { icon: LucideIcon; label: string; href: string }[] = [
   { icon: CalendarDays, label: "今日", href: "/" },
@@ -15,40 +14,13 @@ const tabs: { icon: LucideIcon; label: string; href: string }[] = [
 
 export function TabBar() {
   const pathname = usePathname();
-  const navRef = useRef<HTMLElement>(null);
 
-  // iOS Safari places `fixed; bottom:0` behind the bottom toolbar. Lift the bar
-  // by how much the toolbar overlaps = (full layout height) - (visible height).
-  // The full layout height ≈ the largest window.innerHeight we ever see (i.e.
-  // when the toolbar is collapsed). Clamped to a sane max so a bad reading can
-  // never fling the bar into the middle of the page.
-  useEffect(() => {
-    const vv = window.visualViewport;
-    const nav = navRef.current;
-    if (!vv || !nav) return undefined;
-    let maxH = window.innerHeight;
-    const update = () => {
-      maxH = Math.max(maxH, window.innerHeight);
-      const overlap = Math.max(0, Math.min(140, Math.round(maxH - vv.height - vv.offsetTop)));
-      nav.style.transform = overlap > 1 ? `translateY(${-overlap}px)` : "";
-    };
-    update();
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, { passive: true });
-    return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update);
-    };
-  }, []);
-
+  // Plain fixed bottom bar. In the installed PWA (standalone) there is no
+  // browser toolbar, so it sits perfectly at the bottom. (We no longer try to
+  // JS-lift it around Safari's toolbar — that math kept misfiring on iOS.)
   return (
     <nav
-      ref={navRef}
-      className="fixed inset-x-0 bottom-0 z-50 will-change-transform"
+      className="fixed inset-x-0 bottom-0 z-50"
       style={{
         background: "rgba(255, 251, 243, 0.88)",
         backdropFilter: "blur(20px)",
