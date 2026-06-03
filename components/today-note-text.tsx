@@ -16,7 +16,7 @@ export function TodayNoteText({ fallback, userId }: { fallback: string; userId: 
   const [text, setText] = useState(fallback);
 
   useEffect(() => {
-    const key = `xiaoman:today-note:${userId}:${todayKey()}`;
+    const key = `xiaoman:today-note:v2:${userId}:${todayKey()}`;
     try {
       const cached = window.localStorage.getItem(key);
       if (cached) {
