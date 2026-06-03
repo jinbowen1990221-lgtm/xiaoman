@@ -26,8 +26,9 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; error?
 
   const code = await issueCode(phone);
   const sent = await sendSms(phone, code);
-  if (!sent) {
-    return { success: false, error: "没发出去，再试一次" };
+  if (!sent.ok) {
+    // surface the provider's reason so issues are diagnosable
+    return { success: false, error: sent.reason ? `发送失败：${sent.reason}` : "没发出去，再试一次" };
   }
   return { success: true };
 }

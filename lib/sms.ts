@@ -14,16 +14,18 @@ export function smsEnabled() {
   );
 }
 
-export async function sendSms(phone: string, code: string): Promise<boolean> {
+export type SmsResult = { ok: boolean; reason?: string };
+
+export async function sendSms(phone: string, code: string): Promise<SmsResult> {
   if (!smsEnabled()) {
     console.log(`[小满 DEV OTP] ${phone}: ${code}`);
-    return true;
+    return { ok: true };
   }
   try {
     return await sendAliyun(phone, code);
   } catch (err) {
     console.error("[SMS] send failed", err);
-    return false;
+    return { ok: false, reason: "请求异常" };
   }
 }
 
@@ -52,7 +54,7 @@ async function hmacSha1Base64(key: string, data: string) {
   return typeof Buffer === "undefined" ? btoa(binary) : Buffer.from(bytes).toString("base64");
 }
 
-async function sendAliyun(phone: string, code: string): Promise<boolean> {
+async function sendAliyun(phone: string, code: string): Promise<SmsResult> {
   const accessKeyId = process.env.SMS_ACCESS_KEY_ID as string;
   const accessKeySecret = process.env.SMS_ACCESS_KEY_SECRET as string;
   const signName = process.env.SMS_SIGN_NAME as string;
@@ -90,7 +92,7 @@ async function sendAliyun(phone: string, code: string): Promise<boolean> {
   const data = (await res.json().catch(() => ({}))) as { Code?: string; Message?: string };
   if (data.Code !== "OK") {
     console.error("[SMS] aliyun:", data.Code, data.Message);
-    return false;
+    return { ok: false, reason: `${data.Code ?? "未知"}｜${data.Message ?? ""}`.trim() };
   }
-  return true;
+  return { ok: true };
 }
