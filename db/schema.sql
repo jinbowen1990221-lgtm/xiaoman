@@ -81,3 +81,5 @@ create table if not exists predictions (
   verified_at timestamptz
 );
 create index if not exists predictions_user_created_idx on predictions (user_id, created_at desc);
+alter table predictions add column if not exists category varchar(10) not null default 'other';
+alter table predictions add column if not exists confidence integer not null default 55;

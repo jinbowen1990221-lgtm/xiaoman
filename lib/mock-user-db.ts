@@ -243,14 +243,15 @@ export async function getNotesForUser(userId: string, limit = 50): Promise<Store
 
 export async function createPrediction(
   userId: string,
-  content: string,
-  basis: string
+  input: Pick<StoredPrediction, "content" | "basis" | "category" | "confidence">
 ): Promise<StoredPrediction> {
   const prediction: StoredPrediction = {
     id: crypto.randomUUID(),
     user_id: userId,
-    content,
-    basis,
+    content: input.content,
+    basis: input.basis,
+    category: input.category,
+    confidence: input.confidence,
     status: "pending",
     created_at: new Date().toISOString(),
     verified_at: null

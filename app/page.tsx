@@ -171,8 +171,8 @@ export default async function TodayPage() {
           <CoinMascot size={60} />
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="font-serif text-[19px] font-medium text-primary">抛硬币</h2>
-          <p className="mt-1 truncate text-[13px] font-light text-secondary">帮你做个小决定</p>
+          <h2 className="font-serif text-[19px] font-medium text-primary">帮你做决定</h2>
+          <p className="mt-1 truncate text-[13px] font-light text-secondary">纠结时，小满陪你推演</p>
         </div>
         <div className="grid h-[36px] w-[36px] shrink-0 place-items-center rounded-full border border-white/70 bg-white/45 text-primary">
           <ArrowRight className="h-4 w-4" strokeWidth={1.6} />

@@ -18,24 +18,34 @@ export function TabBar() {
   const navRef = useRef<HTMLElement>(null);
 
   // iOS Safari positions `fixed; bottom:0` behind the bottom toolbar, hiding the
-  // bar. Lift it up by however much the toolbar overlaps the layout viewport so
-  // it always sits just above the browser chrome.
+  // bar. Lift it by however much the toolbar overlaps. NOTE: window.innerHeight
+  // shrinks together with the toolbar on iOS, so it can't measure the overlap —
+  // use the layout-viewport height (documentElement.clientHeight, plus the max
+  // height ever seen) which stays full-size behind the chrome.
   useEffect(() => {
     const vv = window.visualViewport;
     const nav = navRef.current;
     if (!vv || !nav) return undefined;
+    let layoutH = Math.max(window.innerHeight, document.documentElement.clientHeight);
     const update = () => {
-      const overlap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      layoutH = Math.max(layoutH, window.innerHeight, document.documentElement.clientHeight);
+      const overlap = Math.max(0, Math.round(layoutH - vv.height - vv.offsetTop));
       nav.style.transform = overlap > 1 ? `translateY(${-overlap}px)` : "";
     };
     update();
     vv.addEventListener("resize", update);
     vv.addEventListener("scroll", update);
     window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, { passive: true });
+    const raf = requestAnimationFrame(update);
+    const timer = window.setTimeout(update, 400);
     return () => {
       vv.removeEventListener("resize", update);
       vv.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update);
+      cancelAnimationFrame(raf);
+      window.clearTimeout(timer);
     };
   }, []);
 

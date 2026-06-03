@@ -8,8 +8,17 @@ type Prediction = {
   id: string;
   content: string;
   basis: string;
+  category?: "mood" | "behavior" | "sleep" | "other";
+  confidence?: number;
   status: string;
   created_at: string;
+};
+
+const CATEGORY_LABEL: Record<string, string> = {
+  mood: "情绪",
+  behavior: "行为",
+  sleep: "睡眠",
+  other: "预感"
 };
 type Stats = { hit: number; partial: number; total: number };
 type State = { today: Prediction | null; pending: Prediction[]; stats: Stats };
@@ -120,6 +129,16 @@ export function ForesightCard() {
       {/* today's fresh prediction */}
       {today ? (
         <div>
+          <div className="mb-2 flex items-center gap-2">
+            <span className="inline-flex items-center rounded-full bg-[var(--accent-coral)] px-2.5 py-0.5 text-[11px] font-medium text-white">
+              {CATEGORY_LABEL[today.category ?? "other"]}
+            </span>
+            {typeof today.confidence === "number" ? (
+              <span className="font-garamond text-[12px] italic text-[var(--accent-deep)]">
+                把握 {today.confidence}%
+              </span>
+            ) : null}
+          </div>
           <p className="font-serif text-[16px] font-medium leading-[1.7] text-primary">{today.content}</p>
           {today.basis ? (
             <p className="mt-1.5 font-garamond text-[12px] italic text-secondary">— {today.basis}</p>

@@ -26,7 +26,7 @@ export async function GET() {
       const { system, user: prompt } = foresightPrompt(records);
       const raw = await callLLM(system, prompt);
       const parsed = (raw && parseForesight(raw)) || buildForesightFallback(records);
-      todayPrediction = await createPrediction(user.id, parsed.content, parsed.basis);
+      todayPrediction = await createPrediction(user.id, parsed);
     }
   }
 

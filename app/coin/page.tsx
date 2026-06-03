@@ -1,42 +1,69 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { CoinMascot } from "@/components/decorative/CoinMascot";
 import { FixedFooter } from "@/components/onboarding/fixed-footer";
 import { TopNav } from "@/components/top-nav";
+import { StarMascot } from "@/components/decorative/StarMascot";
 import { useBobStore } from "@/store/bob-store";
+
+type Decision = { analysis: string; lean: "a" | "b" | "none"; basis: string };
 
 export default function CoinPage() {
   const router = useRouter();
   const setLastCoinResult = useBobStore((state) => state.setLastCoinResult);
   const [optionA, setOptionA] = useState("去");
   const [optionB, setOptionB] = useState("不去");
+
+  // decision reasoning (the hero)
+  const [decision, setDecision] = useState<Decision | null>(null);
+  const [deciding, setDeciding] = useState(false);
+
+  // coin flip (playful fallback)
+  const [showCoin, setShowCoin] = useState(false);
   const [flips, setFlips] = useState(0);
   const [resultKey, setResultKey] = useState<"a" | "b" | null>(null);
   const [coinFlipId, setCoinFlipId] = useState<string | null>(null);
-  const result = resultKey === "a" ? optionA || "A" : resultKey === "b" ? optionB || "B" : null;
+  const coinResult = resultKey === "a" ? optionA || "A" : resultKey === "b" ? optionB || "B" : null;
 
-  const bobLine = useMemo(() => {
-    if (!result) return "先把两个答案写出来。你会更快听见自己。";
-    return `选 ${result} 吧。别想太多。`;
-  }, [result]);
+  async function decide() {
+    if (deciding) return;
+    setDeciding(true);
+    setDecision(null);
+    try {
+      const res = await fetch("/api/decision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ optionA: optionA || "A", optionB: optionB || "B" })
+      });
+      const data = (res.ok ? await res.json() : null) as Decision | null;
+      setDecision(
+        data?.analysis
+          ? data
+          : { analysis: "我先没想清楚，等一下再陪你想一次？", lean: "none", basis: "" }
+      );
+    } catch {
+      setDecision({ analysis: "刚刚没接上，等一下再试一次。", lean: "none", basis: "" });
+    } finally {
+      setDeciding(false);
+    }
+  }
 
   function flipCoin() {
+    setShowCoin(true);
     const nextKey = Math.random() > 0.5 ? "a" : "b";
     const nextResult = nextKey === "a" ? optionA || "A" : optionB || "B";
-    const nextComment = `选 ${nextResult} 吧。别想太多。`;
-    setFlips((current) => current + 1);
+    setFlips((c) => c + 1);
     setResultKey(nextKey);
     setCoinFlipId(null);
     setLastCoinResult(nextResult);
-    window.setTimeout(() => {
-      void persistCoinFlip(nextKey, nextComment);
-    }, 1000);
+    window.setTimeout(() => void persistCoinFlip(nextKey), 1000);
   }
 
-  async function persistCoinFlip(resultValue: "a" | "b", bobComment: string) {
+  async function persistCoinFlip(resultValue: "a" | "b") {
     try {
       const response = await fetch("/api/coin-flip", {
         method: "POST",
@@ -45,22 +72,17 @@ export default function CoinPage() {
           option_a: optionA || "A",
           option_b: optionB || "B",
           result: resultValue,
-          bob_comment: bobComment
+          bob_comment: `硬币替你选了 ${resultValue === "a" ? optionA : optionB}`
         })
       });
       const data = (await response.json().catch(() => null)) as { id?: string } | null;
       if (data?.id) setCoinFlipId(data.id);
     } catch {
-      // Bob remembers quietly. If this fails, the coin should still feel instant.
+      // silent
     }
   }
 
-  function resetCoin() {
-    setResultKey(null);
-    setCoinFlipId(null);
-  }
-
-  async function acceptResult() {
+  async function done() {
     if (coinFlipId) {
       try {
         await fetch("/api/coin-flip", {
@@ -69,111 +91,169 @@ export default function CoinPage() {
           body: JSON.stringify({ id: coinFlipId, followed: true })
         });
       } catch {
-        // Silent by design.
+        // silent
       }
     }
     router.push("/");
   }
 
-  return (
-    <div className="secondary-page-pad relative z-10 min-h-dvh pb-28">
-      <TopNav title="抛硬币" />
+  const leanA = decision?.lean === "a";
+  const leanB = decision?.lean === "b";
 
-      <section className="stagger-in flex min-h-[calc(100dvh-160px)] flex-col">
+  return (
+    <div className="secondary-page-pad relative z-10 min-h-dvh pb-32">
+      <TopNav title="帮你想想" />
+
+      <section className="stagger-in flex flex-col">
         <div>
-          <p className="eyebrow">YES OR NO · 让硬币替你说</p>
+          <p className="eyebrow">DECISION · 让小满陪你想</p>
           <h1 className="mt-3 font-serif text-[30px] font-medium leading-tight text-primary">
-            <span className="ink-underline">抛一下</span>，再决定。
+            <span className="ink-underline">拿不定</span>主意？
           </h1>
           <p className="mt-2 text-[14px] font-light leading-6 text-secondary">
-            写下两个答案，听听落地的声音。
+            写下两个选择，小满结合你这阵子的记录，陪你推演一下。
           </p>
         </div>
 
-        {/* Option pair — compact */}
+        {/* options */}
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <label className="relative overflow-hidden rounded-[16px] border border-white/70 bg-[var(--card-bg)] px-4 py-3 shadow-[var(--card-shadow)] backdrop-blur-xl">
-            <span aria-hidden="true" className="pointer-events-none absolute right-2.5 top-2.5 font-garamond text-[11px] italic text-secondary">opt.A</span>
-            <span className="font-garamond text-[11px] uppercase tracking-[0.16em] text-secondary">A</span>
-            <textarea
-              value={optionA}
-              onChange={(event) => setOptionA(event.target.value)}
-              className="mt-1 h-10 w-full resize-none border-0 bg-transparent text-[16px] font-medium leading-[1.35] text-primary outline-none placeholder:text-tertiary"
-              placeholder="去"
-            />
-          </label>
-          <label className="relative overflow-hidden rounded-[16px] border border-white/70 bg-[var(--card-bg)] px-4 py-3 shadow-[var(--card-shadow)] backdrop-blur-xl">
-            <span aria-hidden="true" className="pointer-events-none absolute right-2.5 top-2.5 font-garamond text-[11px] italic text-secondary">opt.B</span>
-            <span className="font-garamond text-[11px] uppercase tracking-[0.16em] text-secondary">B</span>
-            <textarea
-              value={optionB}
-              onChange={(event) => setOptionB(event.target.value)}
-              className="mt-1 h-10 w-full resize-none border-0 bg-transparent text-[16px] font-medium leading-[1.35] text-primary outline-none placeholder:text-tertiary"
-              placeholder="不去"
-            />
-          </label>
-        </div>
-
-        {/* Coin stage — the coin itself is tappable to flip */}
-        <div className="relative flex flex-1 flex-col items-center justify-center py-8 text-center">
-          <span aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: "radial-gradient(circle, rgba(212,165,116,0.18), transparent 65%)", filter: "blur(20px)" }} />
-
-          <motion.button
-            type="button"
-            key={flips}
-            onClick={() => { if (!result) flipCoin(); }}
-            animate={{ rotateY: flips ? 720 : 0 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="coin-aura relative grid h-[200px] w-[200px] cursor-pointer place-items-center [transform-style:preserve-3d]"
-            aria-label="抛硬币"
-          >
-            <CoinMascot
-              size={132}
-              result={result}
-              face="blank"
-              options={[optionA || "A", optionB || "B"]}
-            />
-          </motion.button>
-
-          <p className="mt-7 font-serif text-[22px] font-medium text-[var(--accent-coral)]">
-            {result ?? "还没落下"}
-          </p>
-          <p className="mt-2 text-[13px] font-light leading-relaxed text-secondary">{bobLine}</p>
-
-          {result ? (
-            <div className="mt-5 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={resetCoin}
-                className="rounded-full border border-white/70 bg-[rgba(255,251,243,0.66)] px-5 py-2 text-[13px] font-light text-primary shadow-[var(--card-shadow)] backdrop-blur-xl transition-transform hover:scale-[1.02] active:scale-[0.97]"
+          {([["A", optionA, setOptionA, "去", leanA], ["B", optionB, setOptionB, "不去", leanB]] as const).map(
+            ([tag, val, setter, ph, lean]) => (
+              <label
+                key={tag}
+                className={`relative overflow-hidden rounded-[16px] border px-4 py-3 shadow-[var(--card-shadow)] backdrop-blur-xl transition-colors ${
+                  lean
+                    ? "border-[var(--accent-coral)] bg-[rgba(255,247,238,0.85)]"
+                    : "border-white/70 bg-[var(--card-bg)]"
+                }`}
               >
-                再抛一次
-              </button>
-              <button
-                type="button"
-                onClick={acceptResult}
-                className="rounded-full bg-[var(--btn-dark)] px-5 py-2 text-[13px] font-medium text-white shadow-[0_8px_18px_rgba(42,37,32,0.18)] transition-transform hover:scale-[1.02] active:scale-[0.97]"
-              >
-                好，就这样
-              </button>
-            </div>
-          ) : (
-            <p className="mt-4 font-garamond text-[12px] italic text-tertiary">点一下硬币，或按下面的按钮</p>
+                <span className="font-garamond text-[11px] uppercase tracking-[0.16em] text-secondary">
+                  {tag}
+                </span>
+                {lean ? (
+                  <span className="absolute right-2.5 top-2.5 font-garamond text-[10px] italic text-[var(--accent-coral)]">
+                    小满偏这个
+                  </span>
+                ) : null}
+                <textarea
+                  value={val}
+                  onChange={(e) => setter(e.target.value)}
+                  className="mt-1 h-10 w-full resize-none border-0 bg-transparent text-[16px] font-medium leading-[1.35] text-primary outline-none placeholder:text-tertiary"
+                  placeholder={ph}
+                />
+              </label>
+            )
           )}
         </div>
+
+        {/* decision reasoning */}
+        <AnimatePresence mode="wait">
+          {deciding ? (
+            <motion.div
+              key="deciding"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mt-5 flex items-center gap-3 rounded-[18px] border border-white/70 bg-[rgba(255,247,238,0.7)] px-4 py-4 shadow-[var(--card-shadow)] backdrop-blur-xl"
+            >
+              <StarMascot size={32} />
+              <span className="flex items-center gap-2 font-serif text-[14px] text-secondary">
+                小满在翻你的记录
+                <span className="flex gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <motion.span
+                      key={i}
+                      className="h-1.5 w-1.5 rounded-full bg-[var(--accent-coral)]"
+                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.18 }}
+                    />
+                  ))}
+                </span>
+              </span>
+            </motion.div>
+          ) : decision ? (
+            <motion.div
+              key="decision"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mt-5 rounded-[18px] border border-[rgba(199,93,62,0.22)] bg-[rgba(255,247,238,0.7)] px-5 py-4 shadow-[var(--card-shadow)] backdrop-blur-xl"
+            >
+              <div className="mb-2 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-[var(--accent-coral)]" strokeWidth={1.7} />
+                <span className="font-garamond text-[12px] uppercase tracking-[0.16em] text-secondary">
+                  小满的推演
+                </span>
+              </div>
+              <p className="font-serif text-[15px] font-medium leading-[1.75] text-primary">
+                {decision.analysis}
+              </p>
+              <p className="mt-3 font-garamond text-[11px] italic text-tertiary">
+                · 这只是把你说过的话连起来，最终由你来选
+              </p>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        {/* playful coin fallback */}
+        <AnimatePresence>
+          {showCoin ? (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="mt-6 flex flex-col items-center overflow-hidden text-center"
+            >
+              <motion.div
+                key={flips}
+                animate={{ rotateY: flips ? 720 : 0 }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="grid h-[120px] w-[120px] place-items-center [transform-style:preserve-3d]"
+              >
+                <CoinMascot size={104} result={coinResult} face="blank" options={[optionA || "A", optionB || "B"]} />
+              </motion.div>
+              <p className="mt-3 font-serif text-[18px] font-medium text-[var(--accent-coral)]">
+                硬币说：{coinResult}
+              </p>
+              <div className="mt-3 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={flipCoin}
+                  className="rounded-full border border-white/70 bg-[rgba(255,251,243,0.66)] px-5 py-2 text-[13px] font-light text-primary shadow-[var(--card-shadow)] active:scale-[0.97]"
+                >
+                  再抛一次
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void done()}
+                  className="rounded-full bg-[var(--btn-dark)] px-5 py-2 text-[13px] font-medium text-white shadow-[0_8px_18px_rgba(42,37,32,0.18)] active:scale-[0.97]"
+                >
+                  好，就这样
+                </button>
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </section>
 
-      {!result ? (
-        <FixedFooter>
+      <FixedFooter>
+        <button
+          type="button"
+          onClick={() => void decide()}
+          disabled={deciding}
+          className="bob-button-dark h-[56px] w-full text-[15px] active:scale-[0.965] disabled:opacity-50"
+        >
+          {decision ? "再想一次" : "让小满帮我想想"}
+        </button>
+        {!showCoin ? (
           <button
             type="button"
             onClick={flipCoin}
-            className="bob-button-dark h-[56px] w-full text-[15px] active:scale-[0.965]"
+            className="mt-2 w-full text-center font-garamond text-[13px] italic text-secondary"
           >
-            抛！
+            实在选不出？让硬币替你定 →
           </button>
-        </FixedFooter>
-      ) : null}
+        ) : null}
+      </FixedFooter>
     </div>
   );
 }

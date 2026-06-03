@@ -46,12 +46,15 @@ export type StoredNote = {
 };
 
 export type PredictionStatus = "pending" | "hit" | "partial" | "miss";
+export type PredictionCategory = "mood" | "behavior" | "sleep" | "other";
 
 export type StoredPrediction = {
   id: string;
   user_id: string;
   content: string; // the falsifiable prediction
   basis: string; // grounded reason ("据你说的…")
+  category: PredictionCategory;
+  confidence: number; // 0-100, 小满's honesty about how sure it is
   status: PredictionStatus;
   created_at: string;
   verified_at: string | null;
