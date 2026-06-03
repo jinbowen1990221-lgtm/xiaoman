@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { InstallPrompt } from "@/components/install-prompt";
 import { TabBar } from "@/components/tab-bar";
 
 const secondaryRoutes = [
@@ -26,6 +27,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
       <div className="gold-dust" aria-hidden="true" />
       <main className="min-h-dvh">{children}</main>
       {showTabBar ? <TabBar /> : null}
+      <InstallPrompt />
     </div>
   );
 }
