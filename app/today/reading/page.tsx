@@ -43,12 +43,12 @@ export default function TodayReadingPage() {
       <section className="stagger-in mt-2">
         <p className="eyebrow">READING · 今天的你</p>
         <h1 className="mt-3 font-serif text-[28px] font-medium leading-tight text-primary">
-          <span className="ink-underline">读一句</span>，刚好是此刻
+          <span className="ink-underline">读一段</span>，刚好是此刻
         </h1>
 
         {!loaded ? (
           <div className="mt-8 flex items-center gap-2 text-secondary">
-            <span className="font-serif text-[15px]">小满在为你翻一句</span>
+            <span className="font-serif text-[15px]">小满在为你翻一段</span>
             <span className="flex gap-1">
               {[0, 1, 2].map((i) => (
                 <motion.span
@@ -92,7 +92,7 @@ export default function TodayReadingPage() {
             </article>
 
             <p className="mt-5 font-garamond text-[12px] italic text-tertiary">
-              · 名句皆为真实出处，小满只是替你挑了最贴近今天的一句
+              · 皆选自真实的中外文学名著，小满只替你挑了最贴近今天的一段
             </p>
           </motion.div>
         )}

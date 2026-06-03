@@ -10,39 +10,34 @@ export type Quote = {
 };
 
 /**
- * Curated, verifiable literary lines (classic Chinese poetry + well-known works).
- * Attribution is fixed and real — the model never invents quotes, it only
- * picks from this list and writes the connecting line.
+ * Curated, verifiable passages from Chinese & foreign literary works (novels /
+ * prose — not poetry). Attribution is fixed and real — the model never invents
+ * quotes; it only picks from this list and writes the connecting line.
  */
 export const QUOTES: Quote[] = [
-  { text: "人生如逆旅，我亦是行人。", author: "苏轼", source: "《临江仙·送钱穆父》", tones: ["heavy", "calm"], themes: ["自己"] },
-  { text: "长风破浪会有时，直挂云帆济沧海。", author: "李白", source: "《行路难·其一》", tones: ["spark"], themes: ["工作", "自己"] },
-  { text: "千磨万击还坚劲，任尔东西南北风。", author: "郑燮", source: "《竹石》", tones: ["heavy"], themes: ["累", "工作"] },
-  { text: "山重水复疑无路，柳暗花明又一村。", author: "陆游", source: "《游山西村》", tones: ["heavy", "spark"], themes: ["工作"] },
-  { text: "沉舟侧畔千帆过，病树前头万木春。", author: "刘禹锡", source: "《酬乐天扬州初逢席上见赠》", tones: ["heavy"], themes: ["自己"] },
-  { text: "莫愁前路无知己，天下谁人不识君。", author: "高适", source: "《别董大》", tones: ["heavy"], themes: ["朋友"] },
-  { text: "采菊东篱下，悠然见南山。", author: "陶渊明", source: "《饮酒·其五》", tones: ["calm", "warm"], themes: ["自己"] },
-  { text: "此心安处是吾乡。", author: "苏轼", source: "《定风波·南海归赠王定国侍人寓娘》", tones: ["calm", "warm"], themes: ["家人", "自己"] },
-  { text: "一蓑烟雨任平生。", author: "苏轼", source: "《定风波·莫听穿林打叶声》", tones: ["calm", "heavy"], themes: ["自己"] },
-  { text: "晚来天欲雪，能饮一杯无？", author: "白居易", source: "《问刘十九》", tones: ["warm", "calm"], themes: ["朋友"] },
-  { text: "今夜月明人尽望，不知秋思落谁家。", author: "王建", source: "《十五夜望月寄杜郎中》", tones: ["heavy"], themes: ["感情", "家人"] },
-  { text: "此情可待成追忆，只是当时已惘然。", author: "李商隐", source: "《锦瑟》", tones: ["heavy"], themes: ["感情"] },
-  { text: "人生若只如初见，何事秋风悲画扇。", author: "纳兰性德", source: "《木兰花·拟古决绝词柬友》", tones: ["heavy"], themes: ["感情"] },
-  { text: "曾经沧海难为水，除却巫山不是云。", author: "元稹", source: "《离思五首·其四》", tones: ["heavy"], themes: ["感情"] },
-  { text: "愿得一心人，白头不相离。", author: "卓文君", source: "《白头吟》", tones: ["warm"], themes: ["感情"] },
-  { text: "逝者如斯夫，不舍昼夜。", author: "孔子", source: "《论语·子罕》", tones: ["calm"], themes: ["自己"] },
-  { text: "盛年不重来，一日难再晨。", author: "陶渊明", source: "《杂诗·其一》", tones: ["spark"], themes: ["自己"] },
-  { text: "天行健，君子以自强不息。", author: "佚名", source: "《周易·乾卦》", tones: ["spark", "heavy"], themes: ["工作", "自己"] },
-  { text: "天生我材必有用，千金散尽还复来。", author: "李白", source: "《将进酒》", tones: ["spark"], themes: ["钱", "自己"] },
-  { text: "仰天大笑出门去，我辈岂是蓬蒿人。", author: "李白", source: "《南陵别儿童入京》", tones: ["spark"], themes: ["自己"] },
-  { text: "黑夜给了我黑色的眼睛，我却用它寻找光明。", author: "顾城", source: "《一代人》", tones: ["heavy", "spark"], themes: ["自己"] },
-  { text: "世界以痛吻我，要我报之以歌。", author: "泰戈尔", source: "《飞鸟集》", tones: ["heavy", "warm"], themes: ["自己"] },
-  { text: "我们都生活在阴沟里，但仍有人仰望星空。", author: "奥斯卡·王尔德", source: "《温德米尔夫人的扇子》", tones: ["heavy", "spark"], themes: ["自己"] },
-  { text: "海内存知己，天涯若比邻。", author: "王勃", source: "《送杜少府之任蜀州》", tones: ["warm"], themes: ["朋友"] },
-  { text: "但愿人长久，千里共婵娟。", author: "苏轼", source: "《水调歌头·明月几时有》", tones: ["warm", "heavy"], themes: ["家人", "感情"] },
-  { text: "莫等闲，白了少年头，空悲切。", author: "岳飞", source: "《满江红·写怀》", tones: ["spark"], themes: ["工作", "自己"] },
-  { text: "不畏浮云遮望眼，自缘身在最高层。", author: "王安石", source: "《登飞来峰》", tones: ["spark"], themes: ["工作", "自己"] },
-  { text: "衣带渐宽终不悔，为伊消得人憔悴。", author: "柳永", source: "《蝶恋花·伫倚危楼风细细》", tones: ["heavy"], themes: ["感情", "工作"] }
+  { text: "人是为活着本身而活着的，而不是为了活着之外的任何事物所活着。", author: "余华", source: "《活着》", tones: ["heavy", "calm"], themes: ["自己", "累"] },
+  { text: "围在城里的人想逃出来，城外的人想冲进去。对婚姻也罢，职业也罢，人生的愿望大都如此。", author: "钱钟书", source: "《围城》", tones: ["heavy"], themes: ["工作", "感情"] },
+  { text: "希望本是无所谓有，无所谓无的。这正如地上的路；其实地上本没有路，走的人多了，也便成了路。", author: "鲁迅", source: "《故乡》", tones: ["spark", "heavy"], themes: ["自己"] },
+  { text: "但是太阳，他每时每刻都是夕阳也都是旭日。当他熄灭着走下山去收尽苍凉残照之际，正是他在另一面燃烧着爬上山巅布散烈烈朝晖之时。", author: "史铁生", source: "《我与地坛》", tones: ["calm", "spark"], themes: ["自己"] },
+  { text: "这个人也许永远不回来了，也许明天回来。", author: "沈从文", source: "《边城》", tones: ["heavy"], themes: ["感情", "朋友"] },
+  { text: "那一天我二十一岁，在我一生的黄金时代。我有好多奢望。我想爱，想吃，还想在一瞬间变成天上半明半暗的云。", author: "王小波", source: "《黄金时代》", tones: ["spark", "warm"], themes: ["自己", "感情"] },
+  { text: "我一个人，思念我们仨。", author: "杨绛", source: "《我们仨》", tones: ["heavy"], themes: ["家人"] },
+  { text: "也许每一个男子全都有过这样的两个女人，至少两个。娶了红玫瑰，久而久之，红的变了墙上的一抹蚊子血，白的还是床前明月光。", author: "张爱玲", source: "《红玫瑰与白玫瑰》", tones: ["heavy"], themes: ["感情"] },
+  { text: "一个人可以被毁灭，但不能被打败。", author: "海明威", source: "《老人与海》", tones: ["spark", "heavy"], themes: ["自己", "累", "工作"] },
+  { text: "多年以后，面对行刑队，奥雷里亚诺·布恩迪亚上校将会回想起父亲带他去看冰块的那个遥远的下午。", author: "加西亚·马尔克斯", source: "《百年孤独》", tones: ["calm"], themes: ["家人", "自己"] },
+  { text: "于是我们奋力向前划，逆水行舟，却注定要不停地被浪潮推回到过去。", author: "菲茨杰拉德", source: "《了不起的盖茨比》", tones: ["heavy", "spark"], themes: ["自己"] },
+  { text: "登上顶峰的斗争本身，足以充实一颗人心。应该认为，西西弗是幸福的。", author: "加缪", source: "《西西弗神话》", tones: ["spark", "heavy"], themes: ["工作", "累", "自己"] },
+  { text: "正因为你为你的玫瑰花费了时间，这才使你的玫瑰变得如此重要。", author: "圣埃克苏佩里", source: "《小王子》", tones: ["warm"], themes: ["感情", "自己"] },
+  { text: "当你穿过了暴风雨，你就不再是原来那个走进暴风雨的人。这就是这场暴风雨的意义。", author: "村上春树", source: "《海边的卡夫卡》", tones: ["heavy", "spark"], themes: ["自己", "累"] },
+  { text: "世界上只有一种真正的英雄主义，那就是在认清生活的真相之后，依然热爱生活。", author: "罗曼·罗兰", source: "《米开朗琪罗传》", tones: ["heavy", "spark"], themes: ["自己", "累"] },
+  { text: "凡是有钱的单身汉，总想娶位太太，这已经成了一条举世公认的真理。", author: "简·奥斯汀", source: "《傲慢与偏见》", tones: ["calm", "warm"], themes: ["感情", "钱"] },
+  { text: "你以为，因为我穷、低微、不美、矮小，我就没有灵魂没有心吗？你想错了——我的心灵跟你一样丰富，我的胸怀跟你一样充实。", author: "夏洛蒂·勃朗特", source: "《简·爱》", tones: ["spark", "heavy"], themes: ["自己", "感情"] },
+  { text: "幸福的家庭都是相似的，不幸的家庭各有各的不幸。", author: "列夫·托尔斯泰", source: "《安娜·卡列尼娜》", tones: ["heavy", "calm"], themes: ["家人"] },
+  { text: "这是最好的时代，也是最坏的时代；这是智慧的时代，也是愚蠢的时代。", author: "狄更斯", source: "《双城记》", tones: ["heavy", "spark"], themes: ["自己", "工作"] },
+  { text: "鸟要奋力冲破蛋壳。这枚蛋就是世界。谁要诞生，就得先摧毁一个世界。", author: "赫尔曼·黑塞", source: "《德米安》", tones: ["spark", "heavy"], themes: ["自己"] },
+  { text: "一天早晨，格里高尔·萨姆沙从不安的睡梦中醒来，发现自己躺在床上变成了一只巨大的甲虫。", author: "卡夫卡", source: "《变形记》", tones: ["heavy"], themes: ["工作", "累", "自己"] },
+  { text: "负担越重，我们的生命越贴近大地，它就越真切实在。", author: "米兰·昆德拉", source: "《不能承受的生命之轻》", tones: ["heavy", "calm"], themes: ["自己", "累"] },
+  { text: "在那个充满预兆与星辰的夜里，我第一次向这世界温柔的冷漠敞开了自己的心扉。", author: "加缪", source: "《局外人》", tones: ["calm", "heavy"], themes: ["自己"] }
 ];
 
 /** Pick the most resonant quote for the user's recent diary (deterministic per seed). */
