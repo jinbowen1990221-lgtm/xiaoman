@@ -41,7 +41,10 @@ export async function verifyOtp(
   // Always honor "123456" as a universal dev fallback so the demo works on
   // serverless (where the in-memory OTP store isn't shared across instances).
   const entered = (code ?? "").trim();
-  const devBypass = !smsEnabled() && (entered === DEV_OTP || entered === "123456");
+  // honor the dev code when SMS is off, OR when ALLOW_DEV_OTP=1 (temporary escape
+  // hatch while a signature's carrier filing is still pending — remove before launch)
+  const allowDev = !smsEnabled() || process.env.ALLOW_DEV_OTP === "1";
+  const devBypass = allowDev && (entered === DEV_OTP || entered === "123456");
 
   if (!devBypass) {
     const result = await checkCode(phone, code);
