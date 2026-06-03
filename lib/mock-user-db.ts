@@ -3,6 +3,7 @@ import type {
   CoinFlip,
   OnboardingPatch,
   PredictionStatus,
+  StoredLotteryFavorite,
   StoredNote,
   StoredPrediction,
   StoredRecord,
@@ -23,6 +24,7 @@ const globalForUsers = globalThis as unknown as {
   __bobRecords?: StoredRecord[];
   __bobNotes?: StoredNote[];
   __bobPredictions?: StoredPrediction[];
+  __bobLotteryFavorites?: StoredLotteryFavorite[];
 };
 
 const users = globalForUsers.__bobUsers ?? new Map<string, User>();
@@ -35,6 +37,8 @@ const notesStore = globalForUsers.__bobNotes ?? [];
 globalForUsers.__bobNotes = notesStore;
 const predictionsStore = globalForUsers.__bobPredictions ?? [];
 globalForUsers.__bobPredictions = predictionsStore;
+const lotteryFavStore = globalForUsers.__bobLotteryFavorites ?? [];
+globalForUsers.__bobLotteryFavorites = lotteryFavStore;
 
 /* ---------------- users ---------------- */
 
@@ -304,4 +308,56 @@ export async function updatePredictionStatus(
   found.status = status;
   found.verified_at = verified_at;
   return found;
+}
+
+/* ---------------- 幸运号收藏 ---------------- */
+
+export async function createLotteryFavorite(
+  userId: string,
+  input: Pick<StoredLotteryFavorite, "type" | "reds" | "blues" | "narrative">
+): Promise<StoredLotteryFavorite> {
+  const fav: StoredLotteryFavorite = {
+    id: crypto.randomUUID(),
+    user_id: userId,
+    type: input.type,
+    reds: input.reds ?? [],
+    blues: input.blues ?? [],
+    narrative: input.narrative ?? "",
+    created_at: new Date().toISOString()
+  };
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb.from("lottery_favorites").insert(fav).select("*").single();
+    return (data as StoredLotteryFavorite) ?? fav;
+  }
+  lotteryFavStore.unshift(fav);
+  return fav;
+}
+
+export async function getLotteryFavorites(
+  userId: string,
+  limit = 30
+): Promise<StoredLotteryFavorite[]> {
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb
+      .from("lottery_favorites")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    return (data as StoredLotteryFavorite[]) ?? [];
+  }
+  return lotteryFavStore.filter((item) => item.user_id === userId).slice(0, limit);
+}
+
+export async function deleteLotteryFavorite(id: string, userId: string): Promise<boolean> {
+  const sb = getSupabase();
+  if (sb) {
+    await sb.from("lottery_favorites").delete().eq("id", id).eq("user_id", userId);
+    return true;
+  }
+  const idx = lotteryFavStore.findIndex((p) => p.id === id && p.user_id === userId);
+  if (idx >= 0) lotteryFavStore.splice(idx, 1);
+  return true;
 }

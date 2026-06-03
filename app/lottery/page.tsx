@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { LotterySelector } from "@/components/lottery-selector";
+import { LotteryFavoritesList } from "@/components/lottery-favorites-list";
 import { getCurrentUser } from "@/lib/auth";
+import { getLotteryFavorites } from "@/lib/mock-user-db";
 import {
   emptyLotteryNumbers,
   generateAllLotteryNumbers,
@@ -19,6 +21,7 @@ export default async function LotteryPage() {
     : (Object.fromEntries(
         lotteryTypes.map((type) => [type, emptyLotteryNumbers(type)])
       ) as Record<LotteryType, LotteryNumbers>);
+  const favorites = user ? await getLotteryFavorites(user.id) : [];
 
   return (
     <div className="stagger-in relative z-10 pb-16">
@@ -50,6 +53,10 @@ export default async function LotteryPage() {
           preferredLottery={user?.preferred_lottery ?? "double_color"}
           requiresBirthday={requiresBirthday}
         />
+      </div>
+
+      <div className="px-6">
+        <LotteryFavoritesList initial={favorites} />
       </div>
     </div>
   );

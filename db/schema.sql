@@ -92,3 +92,15 @@ create table if not exists otp_codes (
   attempts integer not null default 0,
   last_sent_at timestamptz not null default now()
 );
+
+-- 幸运号收藏
+create table if not exists lottery_favorites (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  type varchar(20) not null,
+  reds integer[] not null default '{}',
+  blues integer[] not null default '{}',
+  narrative text not null default '',
+  created_at timestamptz default now()
+);
+create index if not exists lottery_favorites_user_created_idx on lottery_favorites (user_id, created_at desc);
