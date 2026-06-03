@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Quote as QuoteIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ReadingActions } from "@/components/reading-actions";
 import { TopNav } from "@/components/top-nav";
 
 type Reading = {
@@ -107,6 +108,8 @@ export default function TodayReadingPage() {
                 — {data.quote.author}{data.quote.source}
               </p>
             </article>
+
+            <ReadingActions reading={data.reading} quote={data.quote} />
 
             <p className="mt-5 font-garamond text-[12px] italic text-tertiary">
               · 皆选自真实的中外文学名著，小满只替你挑了最贴近今天的一段
