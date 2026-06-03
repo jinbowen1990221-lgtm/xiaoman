@@ -48,9 +48,11 @@ html {
 body {
   min-height: 100%;
   margin: 0;
-  background:
-    radial-gradient(circle at 80% 16%, rgba(212, 165, 116, 0.10), transparent 58%),
-    linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+  /* Flat base colour (matches the status-bar theme colour). The vertical
+     gradient used to live here, but it scrolled with the page, so once you
+     scrolled the content under the status bar no longer matched it — a visible
+     seam. Depth now comes only from the FIXED ::after aurora below. */
+  background: var(--bg-start);
   color: var(--text-primary);
   font-family: var(--font-sans), "HarmonyOS Sans", "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif;
   position: relative;
@@ -74,9 +76,9 @@ body::after {
   position: fixed;
   inset: -10%;
   background:
-    radial-gradient(40% 30% at 15% 20%, rgba(212, 165, 116, 0.22), transparent 65%),
-    radial-gradient(35% 28% at 85% 75%, rgba(199, 93, 62, 0.10), transparent 60%),
-    radial-gradient(28% 22% at 60% 40%, rgba(122, 155, 126, 0.10), transparent 65%);
+    radial-gradient(42% 30% at 18% 40%, rgba(212, 165, 116, 0.18), transparent 65%),
+    radial-gradient(35% 28% at 85% 78%, rgba(199, 93, 62, 0.10), transparent 60%),
+    radial-gradient(28% 22% at 60% 55%, rgba(122, 155, 126, 0.10), transparent 65%);
   pointer-events: none;
   z-index: 0;
   animation: aurora-breath 14s ease-in-out infinite alternate;
