@@ -76,17 +76,39 @@ export default function TodayReadingPage() {
             {/* 小满's distillation + connection */}
             <p className="mt-6 text-[15px] font-light leading-[1.9] text-primary">{data.reading}</p>
 
-            {/* the real literary quote */}
-            <article className="relative mt-7 overflow-hidden rounded-[22px] border border-[rgba(199,93,62,0.18)] bg-[rgba(255,247,238,0.6)] px-6 py-7 shadow-[var(--card-shadow)] backdrop-blur-xl">
+            {/* a little book showing the source */}
+            <div className="mt-8 flex justify-center">
+              <BookCover source={data.quote.source} author={data.quote.author} />
+            </div>
+
+            {/* the quote, on a "book page" */}
+            <article
+              className="relative mt-5 overflow-hidden rounded-l-[6px] rounded-r-[16px] border border-[rgba(180,150,100,0.28)] px-7 py-7"
+              style={{
+                background:
+                  "repeating-linear-gradient(180deg, transparent 0 33px, rgba(180,150,100,0.06) 33px 34px), #FBF6EC",
+                boxShadow: "8px 12px 30px rgba(180,150,100,0.20)"
+              }}
+            >
+              {/* bound spine on the left */}
+              <span
+                aria-hidden="true"
+                className="absolute inset-y-0 left-0 w-[10px]"
+                style={{ background: "linear-gradient(90deg, rgba(180,150,100,0.30), rgba(180,150,100,0.06))" }}
+              />
+              {/* faint stitching */}
+              <span aria-hidden="true" className="absolute left-[4px] top-6 h-1 w-1 rounded-full bg-[rgba(160,120,80,0.4)]" />
+              <span aria-hidden="true" className="absolute bottom-6 left-[4px] h-1 w-1 rounded-full bg-[rgba(160,120,80,0.4)]" />
               <QuoteIcon
                 aria-hidden="true"
-                className="absolute right-5 top-5 h-7 w-7 text-[rgba(199,93,62,0.18)]"
+                className="absolute right-5 top-5 h-7 w-7 text-[rgba(199,93,62,0.16)]"
                 strokeWidth={1.4}
                 fill="currentColor"
               />
-              <span aria-hidden="true" className="absolute left-0 top-0 h-full w-[3px] bg-[var(--accent-coral)]" />
-              <p className="font-serif text-[22px] font-medium leading-[1.7] text-primary">{data.quote.text}</p>
-              <p className="mt-4 text-right font-garamond text-[14px] italic text-[var(--accent-deep)]">
+              <p className="relative font-serif text-[21px] font-medium leading-[1.85] text-primary">
+                {data.quote.text}
+              </p>
+              <p className="relative mt-5 text-right font-garamond text-[14px] italic text-[var(--accent-deep)]">
                 — {data.quote.author}{data.quote.source}
               </p>
             </article>
@@ -97,6 +119,42 @@ export default function TodayReadingPage() {
           </motion.div>
         )}
       </section>
+    </div>
+  );
+}
+
+/** A small CSS "book" showing the source — a bit of physicality. */
+function BookCover({ source, author }: { source: string; author: string }) {
+  const title = source.replace(/[《》]/g, "");
+  return (
+    <div
+      className="relative h-[128px] w-[94px] shrink-0 rounded-l-[3px] rounded-r-[7px]"
+      style={{
+        transform: "rotate(-4deg)",
+        background: "linear-gradient(135deg, #C75D3E 0%, #A84A3A 100%)",
+        boxShadow: "0 14px 28px rgba(120,55,40,0.32), inset 0 0 0 1px rgba(255,255,255,0.10)"
+      }}
+    >
+      {/* spine highlight */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-y-0 left-0 w-[8px] rounded-l-[3px]"
+        style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.22), transparent)" }}
+      />
+      {/* page edges on the right */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-y-[3px] right-[-3px] w-[3px] rounded-r-[2px]"
+        style={{ background: "repeating-linear-gradient(180deg, #efe6d6 0 2px, #d8ccb8 2px 3px)" }}
+      />
+      <div className="flex h-full flex-col justify-between py-3 pl-4 pr-2.5">
+        <p className="font-serif text-[12.5px] font-medium leading-[1.3] text-[rgba(255,248,240,0.96)]">
+          {title}
+        </p>
+        <p className="font-garamond text-[9.5px] italic leading-tight text-[rgba(255,248,240,0.82)]">
+          {author}
+        </p>
+      </div>
     </div>
   );
 }

@@ -37,7 +37,19 @@ export const QUOTES: Quote[] = [
   { text: "鸟要奋力冲破蛋壳。这枚蛋就是世界。谁要诞生，就得先摧毁一个世界。", author: "赫尔曼·黑塞", source: "《德米安》", tones: ["spark", "heavy"], themes: ["自己"] },
   { text: "一天早晨，格里高尔·萨姆沙从不安的睡梦中醒来，发现自己躺在床上变成了一只巨大的甲虫。", author: "卡夫卡", source: "《变形记》", tones: ["heavy"], themes: ["工作", "累", "自己"] },
   { text: "负担越重，我们的生命越贴近大地，它就越真切实在。", author: "米兰·昆德拉", source: "《不能承受的生命之轻》", tones: ["heavy", "calm"], themes: ["自己", "累"] },
-  { text: "在那个充满预兆与星辰的夜里，我第一次向这世界温柔的冷漠敞开了自己的心扉。", author: "加缪", source: "《局外人》", tones: ["calm", "heavy"], themes: ["自己"] }
+  { text: "在那个充满预兆与星辰的夜里，我第一次向这世界温柔的冷漠敞开了自己的心扉。", author: "加缪", source: "《局外人》", tones: ["calm", "heavy"], themes: ["自己"] },
+  { text: "我整整一分钟都是幸福的。难道一个人一生哪怕只有一分钟的幸福，也还嫌不够吗？", author: "陀思妥耶夫斯基", source: "《白夜》", tones: ["warm", "heavy"], themes: ["感情", "自己"] },
+  { text: "女人若想写小说，必须有钱，再加一间属于自己的房间。", author: "弗吉尼亚·伍尔夫", source: "《一间自己的房间》", tones: ["spark", "calm"], themes: ["自己", "工作", "钱"] },
+  { text: "我一直暗自设想，天堂应该是图书馆的模样。", author: "博尔赫斯", source: "《关于天赐的诗》", tones: ["calm", "warm"], themes: ["自己"] },
+  { text: "为了使灵魂宁静，一个人每天至少要做两件他不喜欢的事。", author: "毛姆", source: "《月亮与六便士》", tones: ["calm", "spark"], themes: ["自己"] },
+  { text: "人的一切都应该是美的：面貌、衣裳、心灵和思想。", author: "契诃夫", source: "《万尼亚舅舅》", tones: ["warm", "calm"], themes: ["自己"] },
+  { text: "她那时候还太年轻，不知道所有命运赠送的礼物，早已在暗中标好了价格。", author: "茨威格", source: "《断头王后》", tones: ["heavy", "calm"], themes: ["自己", "钱"] },
+  { text: "我什么也不会，我只会思考、等待和斋戒。", author: "赫尔曼·黑塞", source: "《悉达多》", tones: ["calm", "spark"], themes: ["自己", "工作"] },
+  { text: "那些杀不死我的，使我更强大。", author: "尼采", source: "《偶像的黄昏》", tones: ["spark", "heavy"], themes: ["累", "自己"] },
+  { text: "美的事物，对如今的我而言，已经成了怨敌。", author: "三岛由纪夫", source: "《金阁寺》", tones: ["heavy"], themes: ["自己", "感情"] },
+  { text: "凌晨四点醒来，发现海棠花未眠。", author: "川端康成", source: "《花未眠》", tones: ["calm", "warm"], themes: ["自己", "睡眠"] },
+  { text: "死并非生的对立面，而是作为生的一部分永存。", author: "村上春树", source: "《挪威的森林》", tones: ["heavy", "calm"], themes: ["自己"] },
+  { text: "女性主义，绝不是弱者想变成强者的思想，而是追求弱者也能得到尊重的思想。", author: "上野千鹤子", source: "东京大学入学致辞", tones: ["spark"], themes: ["自己", "工作"] }
 ];
 
 /** Pick the most resonant quote for the user's recent diary (deterministic per seed). */
@@ -90,5 +102,5 @@ export function buildReadingFallback(records: StoredRecord[], quote: Quote): str
     spark: "今天的你，心里有一点光。",
     calm: "今天的你，平平静静的。"
   };
-  return `${lead[tone] ?? lead.calm}很多年前，${quote.author}也写下过相似的心境——也许此刻，它正好说中了你。`;
+  return `${lead[tone] ?? lead.calm}在另一本书里，${quote.author}也写下过相似的心境——也许此刻，它正好说中了你。`;
 }
