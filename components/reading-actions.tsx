@@ -3,6 +3,7 @@
 import { Heart, Share2, X } from "lucide-react";
 import QRCode from "qrcode";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 type Quote = { text: string; author: string; source: string };
 
@@ -106,8 +107,10 @@ export function ReadingActions({ reading, quote }: { reading: string; quote: Quo
         </button>
       </div>
 
-      {/* save popup — single action */}
-      {poster ? (
+      {/* save popup — single action; portaled to body so the mask is truly full-screen
+          (the parent has a framer-motion transform that would otherwise clip it) */}
+      {poster
+        ? createPortal(
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[rgba(42,37,32,0.72)] backdrop-blur-sm">
           <button type="button" aria-label="关闭" onClick={() => setPoster(null)} className="absolute inset-0" />
           <div
@@ -141,14 +144,19 @@ export function ReadingActions({ reading, quote }: { reading: string; quote: Quo
               保存到相册
             </button>
           </div>
-        </div>
-      ) : null}
+        </div>,
+            document.body
+          )
+        : null}
 
-      {toast ? (
+      {toast
+        ? createPortal(
         <div className="fixed bottom-24 left-1/2 z-[80] -translate-x-1/2 rounded-[18px] bg-btn-dark px-4 py-2 text-sm text-white">
           {toast}
-        </div>
-      ) : null}
+        </div>,
+            document.body
+          )
+        : null}
     </>
   );
 }
@@ -226,50 +234,53 @@ async function drawPoster(reading: string, quote: Quote): Promise<string> {
   ctx.fillText(`— ${quote.author}${quote.source}`, W - pad, y + 28);
   ctx.textAlign = "left";
 
-  /* ----- footer: brand (icon + text) left, QR right — all inside the frame ----- */
-  const footTop = H - 220;
+  /* ----- footer: brand (icon + text) left, QR right — both centered on one band ----- */
+  const cy = H - 168; // shared vertical center for both blocks
 
-  // brand icon + text to its right
+  // brand: bigger icon + bigger text, vertically centered on cy
   try {
     const icon = await loadImage("/icon-192.png");
-    const s = 92;
+    const s = 118;
+    const iy = cy - s / 2;
     ctx.save();
-    roundRectPath(ctx, pad, footTop, s, s, 20);
+    roundRectPath(ctx, pad, iy, s, s, 24);
     ctx.clip();
-    ctx.drawImage(icon, pad, footTop, s, s);
+    ctx.drawImage(icon, pad, iy, s, s);
     ctx.restore();
-    const tx = pad + s + 22;
+    const tx = pad + s + 30;
     ctx.fillStyle = "#C75D3E";
-    ctx.font = `600 40px ${serif}`;
-    ctx.fillText("小满", tx, footTop + 40);
+    ctx.font = `600 52px ${serif}`;
+    ctx.fillText("小满", tx, cy - 24);
     ctx.fillStyle = "#8A7E6E";
-    ctx.font = `24px ${serif}`;
-    ctx.fillText("一个一直在听你说话的 AI 朋友", tx, footTop + 78);
+    ctx.font = `27px ${serif}`;
+    ctx.fillText("一个一直在听你说话的 AI 朋友", tx, cy + 16);
     ctx.fillStyle = "#B8AC9A";
-    ctx.font = `22px ${sans}`;
-    ctx.fillText(SITE, tx, footTop + 110);
+    ctx.font = `24px ${sans}`;
+    ctx.fillText(SITE, tx, cy + 52);
   } catch {
     ctx.fillStyle = "#C75D3E";
-    ctx.font = `600 40px ${serif}`;
-    ctx.fillText("小满", pad, footTop + 50);
+    ctx.font = `600 52px ${serif}`;
+    ctx.fillText("小满", pad, cy);
   }
 
-  // QR + caption, kept inside the frame (frame bottom is H-44)
+  // QR + caption block, vertically centered on the same cy
   try {
     const qrUrl = await QRCode.toDataURL(SITE_URL, {
       margin: 1,
-      width: 240,
+      width: 260,
       color: { dark: "#2A2520", light: "#FBF6EC" }
     });
     const qr = await loadImage(qrUrl);
-    const qs = 132;
+    const qs = 138;
+    const capGap = 30;
+    const blockH = qs + capGap;
     const qx = W - pad - qs;
-    const qy = footTop - 6;
+    const qy = cy - blockH / 2;
     ctx.drawImage(qr, qx, qy, qs, qs);
     ctx.fillStyle = "#B8AC9A";
     ctx.font = `22px ${sans}`;
     ctx.textAlign = "center";
-    ctx.fillText("扫码遇见小满", qx + qs / 2, qy + qs + 26);
+    ctx.fillText("扫码遇见小满", qx + qs / 2, qy + qs + 24);
     ctx.textAlign = "left";
   } catch {
     // QR optional
