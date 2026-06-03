@@ -31,6 +31,7 @@ const VERDICTS: { key: "hit" | "partial" | "miss"; label: string }[] = [
 
 export function ForesightCard() {
   const [state, setState] = useState<State | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,7 +41,10 @@ export function ForesightCard() {
       .then((d: State | null) => {
         if (!cancelled && d) setState(d);
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setLoaded(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -76,7 +80,35 @@ export function ForesightCard() {
     }
   }
 
-  // nothing to show yet (brand-new user with no records) → hide entirely
+  // while 小满 is composing the prediction (LLM call), show a calm placeholder
+  // so the card is clearly present and not perceived as tied to anything else
+  if (!loaded) {
+    return (
+      <section className="relative overflow-hidden rounded-[24px] border border-white/70 bg-[var(--card-bg)] px-5 py-5 shadow-[var(--card-shadow)] backdrop-blur-xl">
+        <div className="mb-3 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-[var(--accent-coral)]" strokeWidth={1.7} />
+          <p className="font-garamond text-[12px] font-semibold uppercase tracking-[0.18em] text-secondary">
+            小满的预感
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <p className="font-serif text-[15px] text-secondary">小满在看你接下来几天</p>
+          <span className="flex gap-1">
+            {[0, 1, 2].map((i) => (
+              <motion.span
+                key={i}
+                className="h-1.5 w-1.5 rounded-full bg-[var(--accent-coral)]"
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.18 }}
+              />
+            ))}
+          </span>
+        </div>
+      </section>
+    );
+  }
+
+  // loaded but nothing to show (brand-new user with no records) → hide entirely
   if (!state || (!state.today && state.pending.length === 0)) return null;
 
   const { today, pending, stats } = state;

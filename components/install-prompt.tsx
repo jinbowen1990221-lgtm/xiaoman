@@ -23,34 +23,42 @@ export function InstallPrompt() {
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
-    const standalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
-    if (standalone) return undefined; // already installed — nothing to prompt
-
-    try {
-      const t = Number(window.localStorage.getItem(KEY) || 0);
-      if (t && Date.now() - t < SNOOZE) return undefined;
-    } catch {
-      // ignore storage errors
-    }
-
     const ua = navigator.userAgent || "";
-    const ios = /iphone|ipad|ipod/i.test(ua);
-    const android = /android/i.test(ua);
-    if (!ios && !android) return undefined; // desktop — skip
-    setPlatform(ios ? "ios" : "android");
+    const android = /android/i.test(ua) && !/iphone|ipad|ipod/i.test(ua);
+    setPlatform(android ? "android" : "ios");
 
+    // capture Android's install event (for the one-tap button)
     const onBIP = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
     };
     window.addEventListener("beforeinstallprompt", onBIP);
 
-    const timer = window.setTimeout(() => setShow(true), 2600);
+    // manual trigger (from the "让小满一直陪伴你" card) — always works
+    const onManual = () => setShow(true);
+    window.addEventListener("xiaoman:show-install", onManual);
+
+    // auto-show: only when on mobile, not already installed, and not snoozed
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+    let snoozed = false;
+    try {
+      const t = Number(window.localStorage.getItem(KEY) || 0);
+      snoozed = Boolean(t && Date.now() - t < SNOOZE);
+    } catch {
+      // ignore
+    }
+    const isMobile = android || /iphone|ipad|ipod/i.test(ua);
+    let timer: number | undefined;
+    if (isMobile && !standalone && !snoozed) {
+      timer = window.setTimeout(() => setShow(true), 2600);
+    }
+
     return () => {
       window.removeEventListener("beforeinstallprompt", onBIP);
-      window.clearTimeout(timer);
+      window.removeEventListener("xiaoman:show-install", onManual);
+      if (timer) window.clearTimeout(timer);
     };
   }, []);
 

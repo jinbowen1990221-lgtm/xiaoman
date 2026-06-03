@@ -1,6 +1,7 @@
 import { ChevronRight, Heart, Settings } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { CompanionCard } from "@/components/companion-card";
 import { LogoutButton } from "@/components/logout-button";
 import { getCurrentUser } from "@/lib/auth";
 import { getRecordsForUser } from "@/lib/mock-user-db";
@@ -71,6 +72,9 @@ export default async function MePage() {
           </div>
         </div>
       </section>
+
+      {/* prominent: guide to add 小满 to the home screen */}
+      <CompanionCard />
 
       <Section
         eyebrow="SETTINGS · 和小满有关的设置"

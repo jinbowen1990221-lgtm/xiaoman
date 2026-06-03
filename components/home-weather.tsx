@@ -65,11 +65,30 @@ export function HomeWeather() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [mode, setMode] = useState<"idle" | "loading">("idle");
 
-  // Only read the cache on mount — never auto-prompt for location. A surprise
-  // permission dialog on first load steals the user's first tap elsewhere.
+  // On mount: use fresh cache; else, if location was ALREADY granted, fetch
+  // silently (no tap, no prompt). Only when permission is undecided do we keep
+  // the tap-to-enable chip — so a surprise dialog can't steal the first tap.
   useEffect(() => {
     const cached = loadCache();
-    if (cached) setWeather(cached);
+    if (cached) {
+      setWeather(cached);
+      return undefined;
+    }
+    let cancelled = false;
+    const perms = (navigator as Navigator & { permissions?: Permissions }).permissions;
+    if (perms?.query) {
+      perms
+        .query({ name: "geolocation" as PermissionName })
+        .then((status) => {
+          if (!cancelled && status.state === "granted") requestWeather();
+        })
+        .catch(() => undefined);
+    }
+    return () => {
+      cancelled = true;
+    };
+    // requestWeather is stable for our purposes; run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function requestWeather() {
