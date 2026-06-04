@@ -60,16 +60,6 @@ export type StoredPrediction = {
   verified_at: string | null;
 };
 
-export type StoredLotteryFavorite = {
-  id: string;
-  user_id: string;
-  type: PreferredLottery;
-  reds: number[];
-  blues: number[];
-  narrative: string;
-  created_at: string;
-};
-
 export type CoinFlip = {
   id: string;
   user_id: string;

@@ -1,6 +1,5 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { Ball } from "@/components/decorative/Ball";
 import type { LotteryNumbers, LotteryType } from "@/lib/lottery";
 import { lotteryLabels } from "@/lib/lottery";
@@ -8,13 +7,11 @@ import { lotteryLabels } from "@/lib/lottery";
 export function LotteryCard({
   numbers,
   empty = false,
-  showMoreLink = false,
-  favoriteSlot
+  showMoreLink = false
 }: {
   numbers: LotteryNumbers;
   empty?: boolean;
   showMoreLink?: boolean;
-  favoriteSlot?: ReactNode;
 }) {
   return (
     <section className="relative overflow-hidden rounded-[24px] border border-white/70 bg-[var(--card-bg)] px-5 py-5 shadow-[var(--card-shadow)] backdrop-blur-xl">
@@ -22,21 +19,18 @@ export function LotteryCard({
         <p className="text-[14px] font-light text-secondary">
           本周幸运号 · {lotteryLabels[numbers.type]}
         </p>
-        <div className="flex shrink-0 items-center gap-4">
-          {favoriteSlot}
-          {showMoreLink ? (
-            <Link
-              href="/lottery"
-              className="group/more inline-flex shrink-0 items-center gap-1 text-[13px] font-light text-secondary transition-colors hover:text-[var(--accent-coral)]"
-            >
-              更多彩种
-              <ChevronRight
-                className="h-4 w-4 transition-transform group-hover/more:translate-x-0.5"
-                strokeWidth={1.5}
-              />
-            </Link>
-          ) : null}
-        </div>
+        {showMoreLink ? (
+          <Link
+            href="/lottery"
+            className="group/more inline-flex shrink-0 items-center gap-1 text-[13px] font-light text-secondary transition-colors hover:text-[var(--accent-coral)]"
+          >
+            更多彩种
+            <ChevronRight
+              className="h-4 w-4 transition-transform group-hover/more:translate-x-0.5"
+              strokeWidth={1.5}
+            />
+          </Link>
+        ) : null}
       </div>
 
       <div className="relative z-10 mb-4 flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

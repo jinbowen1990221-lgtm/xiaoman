@@ -6,7 +6,6 @@ import { CoinMascot } from "@/components/decorative/CoinMascot";
 import { ForesightCard } from "@/components/foresight-card";
 import { HomeWeather } from "@/components/home-weather";
 import { LotteryCard } from "@/components/lottery-card";
-import { LotteryFavoriteButton } from "@/components/lottery-favorite-button";
 import { TodayNoteText } from "@/components/today-note-text";
 import { getCurrentUser } from "@/lib/auth";
 import { buildDailyNoteFallback } from "@/lib/daily-note";
@@ -168,12 +167,7 @@ export default async function TodayPage() {
 
       <div className="mx-6 mt-4">
         {hasBirthday ? (
-          <LotteryCard
-            numbers={homeLottery}
-            empty={false}
-            showMoreLink
-            favoriteSlot={<LotteryFavoriteButton numbers={homeLottery} />}
-          />
+          <LotteryCard numbers={homeLottery} empty={false} showMoreLink />
         ) : (
           <Link href="/me/birthday" className="block">
             <LotteryCard numbers={homeLottery} empty showMoreLink={false} />
