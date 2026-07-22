@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <img src="./public/images/readme/xiaoman-mockup-reading.webp" width="880" alt="小满今日解读与瓶中星光主视觉" />
+  <img src="./public/images/readme/xiaoman-readme-hero.webp" width="880" alt="小满 AI 陪伴应用主视觉" />
 </p>
 
 ## 关于小满
