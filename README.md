@@ -10,7 +10,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open [https://xiaoman-lime.vercel.app](https://xiaoman-lime.vercel.app).
 
 ## Implemented
 
