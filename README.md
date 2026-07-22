@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <img src="./public/images/readme/xiaoman-hero-home.webp" width="880" alt="小满当前线上界面主视觉" />
+  <img src="./public/images/readme/xiaoman-mockup-reading.webp" width="880" alt="小满今日解读与瓶中星光主视觉" />
 </p>
 
 ## 关于小满
@@ -40,32 +40,6 @@
 - **移动端优先**：适配手机浏览器，并支持添加到主屏幕；当前不提供离线访问。
 
 > 本功能仅生成娱乐性的每周幸运号码。号码由生日、用户标识和 ISO 周数经过确定性伪随机算法生成，不使用历史开奖数据，不构成彩票预测或投注建议，也不能提高中奖概率。请理性参与。
-
-## 界面预览
-
-### 把日常，慢慢记成你
-
-<p align="center">
-  <img src="./public/images/readme/xiaoman-mockup-record.webp" width="760" alt="小满当前线上界面的纸感记录 Mockup" />
-</p>
-
-### 从真实记录里，看见此刻
-
-<p align="center">
-  <img src="./public/images/readme/xiaoman-mockup-reading.webp" width="760" alt="小满今日解读与瓶中星光 Mockup" />
-</p>
-
-### 给普通的一周，添一点仪式感
-
-<p align="center">
-  <img src="./public/images/readme/xiaoman-mockup-lucky.webp" width="760" alt="小满娱乐性幸运号码 Mockup" />
-</p>
-
-### 记录、回应、回看与预感
-
-<p align="center">
-  <img src="./public/images/readme/xiaoman-mockup-companion.webp" width="760" alt="小满当前线上界面的珊瑚近景 Mockup" />
-</p>
 
 ## 在线体验
 
