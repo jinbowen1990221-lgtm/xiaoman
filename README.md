@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./public/icon-192.png" width="96" alt="小满 App 图标" />
+  <img src="./public/icon-readme.png" width="96" alt="小满 App 图标" />
 </p>
 
 <h1 align="center">小满</h1>
