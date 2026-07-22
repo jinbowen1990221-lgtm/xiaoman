@@ -22,12 +22,12 @@ export default function OnboardingLifestylePage() {
 
   async function submit() {
     if (!lifestyle) return;
-    await saveOnboarding({ lifestyle });
+    if (!(await saveOnboarding({ lifestyle }))) return;
     router.push("/onboarding/thought");
   }
 
   async function skip() {
-    await saveOnboarding({ lifestyle: null });
+    if (!(await saveOnboarding({ lifestyle: null }))) return;
     router.push("/onboarding/thought");
   }
 

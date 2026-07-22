@@ -27,12 +27,12 @@ export default function OnboardingBirthdayPage() {
   async function submit() {
     const value = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     setField("birthday", value);
-    await saveOnboarding({ birthday: value, birthday_type: birthdayType });
+    if (!(await saveOnboarding({ birthday: value, birthday_type: birthdayType }))) return;
     router.push("/onboarding/lifestyle");
   }
 
   async function skip() {
-    await saveOnboarding({ birthday: null });
+    if (!(await saveOnboarding({ birthday: null }))) return;
     router.push("/onboarding/lifestyle");
   }
 

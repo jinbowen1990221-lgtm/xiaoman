@@ -16,6 +16,7 @@ export function LotterySelector({
 }) {
   const router = useRouter();
   const [pendingType, setPendingType] = useState<LotteryType | null>(null);
+  const [saveError, setSaveError] = useState("");
 
   async function chooseLottery(type: LotteryType) {
     if (requiresBirthday) {
@@ -24,14 +25,19 @@ export function LotterySelector({
     }
 
     setPendingType(type);
+    setSaveError("");
     try {
-      await fetch("/api/user/preferred-lottery", {
+      const response = await fetch("/api/user/preferred-lottery", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ preferred_lottery: type })
       });
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? "暂时没存好，请稍后再试");
       router.push("/");
       router.refresh();
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "暂时没存好，请稍后再试");
     } finally {
       setPendingType(null);
     }
@@ -39,6 +45,11 @@ export function LotterySelector({
 
   return (
     <div className="space-y-4">
+      {saveError ? (
+        <p role="alert" className="text-center text-[13px] text-[var(--accent-coral)]">
+          {saveError}
+        </p>
+      ) : null}
       {(["double_color", "super_lotto", "arrangement_3"] as LotteryType[]).map((type) => {
         const active = type === preferredLottery;
         return (

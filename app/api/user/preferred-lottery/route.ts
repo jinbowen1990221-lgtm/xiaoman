@@ -20,11 +20,16 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "彩种不对" }, { status: 400 });
   }
 
-  const user = await updateMockUser(currentUser.phone, {
-    preferred_lottery: body.preferred_lottery
-  });
-  const token = await createSessionToken(user);
-  const response = NextResponse.json({ user });
-  response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions);
-  return response;
+  try {
+    const user = await updateMockUser(currentUser.phone, {
+      preferred_lottery: body.preferred_lottery
+    });
+    const token = await createSessionToken(user);
+    const response = NextResponse.json({ user });
+    response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions);
+    return response;
+  } catch (error) {
+    console.error("[preferred-lottery-api] save failed", error);
+    return NextResponse.json({ error: "暂时没存好，请稍后再试" }, { status: 503 });
+  }
 }

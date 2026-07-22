@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { getOrCreateMockUser } from "@/lib/mock-user-db";
+import { getMockUserByPhone, getOrCreateMockUser } from "@/lib/mock-user-db";
 import { canSend, checkCode, issueCode } from "@/lib/otp";
 import { createSessionToken, readSessionToken, SESSION_COOKIE } from "@/lib/session";
 import { sendSms, smsEnabled } from "@/lib/sms";
@@ -13,6 +13,7 @@ export async function getCurrentUser(): Promise<User | null> {
 // Dev master code — only honored when real SMS is NOT configured, for local testing.
 // Trimmed for safety (env values sometimes carry stray whitespace).
 const DEV_OTP = (process.env.DEV_OTP ?? "123456").trim();
+export const AUTH_UNAVAILABLE_MESSAGE = "验证码服务暂时不可用，请稍后再试";
 
 export async function sendOtp(phone: string): Promise<{ success: boolean; error?: string }> {
   if (!/^\d{11}$/.test(phone)) {
@@ -27,8 +28,7 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; error?
   const code = await issueCode(phone);
   const sent = await sendSms(phone, code);
   if (!sent.ok) {
-    // surface the provider's reason so issues are diagnosable
-    return { success: false, error: sent.reason ? `发送失败：${sent.reason}` : "没发出去，再试一次" };
+    throw new Error(sent.reason ?? "SMS provider rejected the request");
   }
   return { success: true };
 }
@@ -36,25 +36,31 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; error?
 export async function verifyOtp(
   phone: string,
   code: string
-): Promise<{ success: boolean; token?: string; error?: string }> {
-  // dev master code only when SMS is off (local/testing).
-  // Always honor "123456" as a universal dev fallback so the demo works on
-  // serverless (where the in-memory OTP store isn't shared across instances).
+): Promise<{ success: boolean; token?: string; user?: User; isNewUser?: boolean; error?: string }> {
+  if (!/^\d{11}$/.test(phone) || !/^\d{6}$/.test((code ?? "").trim())) {
+    return { success: false, error: "手机号或验证码格式不对" };
+  }
+
+  // The fixed code is local-development-only. Production always verifies the
+  // one-time code stored in Supabase, even if ALLOW_DEV_OTP was left behind.
   const entered = (code ?? "").trim();
-  // honor the dev code when SMS is off, OR when ALLOW_DEV_OTP=1 (temporary escape
-  // hatch while a signature's carrier filing is still pending — remove before launch)
-  const allowDev = !smsEnabled() || process.env.ALLOW_DEV_OTP === "1";
-  const devBypass = allowDev && (entered === DEV_OTP || entered === "123456");
+  const devBypass = process.env.NODE_ENV !== "production" && !smsEnabled() && entered === DEV_OTP;
 
   if (!devBypass) {
-    const result = await checkCode(phone, code);
+    const result = await checkCode(phone, entered);
     if (result === "expired") return { success: false, error: "验证码过期了，重新发一个" };
     if (result === "too_many") return { success: false, error: "试太多次了，稍后再来" };
     if (result === "mismatch") return { success: false, error: "验证码不对，再试一次" };
   }
 
-  const user = await getOrCreateMockUser(phone);
-  return { success: true, token: await createSessionToken(user) };
+  const existing = await getMockUserByPhone(phone);
+  const user = existing ?? (await getOrCreateMockUser(phone));
+  return {
+    success: true,
+    token: await createSessionToken(user),
+    user,
+    isNewUser: !existing
+  };
 }
 
 export async function logout(): Promise<void> {

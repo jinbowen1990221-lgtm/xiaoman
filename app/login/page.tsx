@@ -23,20 +23,25 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const response = await fetch("/api/auth/send-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone })
-    });
+    try {
+      const response = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone })
+      });
 
-    setLoading(false);
-    if (!response.ok) {
-      const data = (await response.json().catch(() => ({}))) as { error?: string };
-      setError(data.error ?? "没发出去，再试一次。");
-      return;
+      if (!response.ok) {
+        const data = (await response.json().catch(() => ({}))) as { error?: string };
+        setError(data.error ?? "没发出去，再试一次。");
+        return;
+      }
+
+      router.push(`/login/verify?phone=${phone}`);
+    } catch {
+      setError("网络有点慢，请稍后再试。");
+    } finally {
+      setLoading(false);
     }
-
-    router.push(`/login/verify?phone=${phone}`);
   }
 
   return (

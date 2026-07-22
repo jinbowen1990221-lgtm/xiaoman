@@ -13,10 +13,11 @@ export function StarMascot({ size = 140 }: { size?: number }) {
         }}
       />
       <Image
-        src="/images/home/star-mascot.png"
+        src="/images/home/star-mascot.webp"
         alt=""
-        width={800}
-        height={800}
+        width={480}
+        height={480}
+        sizes={`${size}px`}
         priority
         className="home-float relative h-full w-full object-contain"
         style={{ filter: "drop-shadow(0 10px 18px rgba(180,120,40,0.20))" }}

@@ -27,14 +27,34 @@ type OtpRow = {
   last_sent_at: string;
 };
 
+export class OtpStorageError extends Error {
+  constructor(operation: string, cause?: unknown) {
+    super(`OTP storage failed while trying to ${operation}`, { cause });
+    this.name = "OtpStorageError";
+  }
+}
+
+function getOtpClient(operation: string) {
+  const client = getSupabase();
+  if (!client && process.env.NODE_ENV === "production") {
+    throw new OtpStorageError(operation, new Error("Supabase is not configured"));
+  }
+  return client;
+}
+
+function checkStorageError(operation: string, error: unknown) {
+  if (error) throw new OtpStorageError(operation, error);
+}
+
 export async function canSend(phone: string): Promise<{ ok: boolean; waitSec?: number }> {
-  const sb = getSupabase();
+  const sb = getOtpClient("check resend limit");
   if (sb) {
-    const { data } = await sb
+    const { data, error } = await sb
       .from("otp_codes")
       .select("last_sent_at")
       .eq("phone", phone)
       .maybeSingle();
+    checkStorageError("check resend limit", error);
     if (!data) return { ok: true };
     const since = Date.now() - new Date((data as OtpRow).last_sent_at).getTime();
     if (since < RESEND_GAP_MS) return { ok: false, waitSec: Math.ceil((RESEND_GAP_MS - since) / 1000) };
@@ -49,11 +69,12 @@ export async function canSend(phone: string): Promise<{ ok: boolean; waitSec?: n
 }
 
 export async function issueCode(phone: string): Promise<string> {
-  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const random = crypto.getRandomValues(new Uint32Array(1))[0];
+  const code = String(100000 + (random % 900000));
   const now = Date.now();
-  const sb = getSupabase();
+  const sb = getOtpClient("store verification code");
   if (sb) {
-    await sb.from("otp_codes").upsert(
+    const { error } = await sb.from("otp_codes").upsert(
       {
         phone,
         code,
@@ -63,6 +84,7 @@ export async function issueCode(phone: string): Promise<string> {
       },
       { onConflict: "phone" }
     );
+    checkStorageError("store verification code", error);
     return code;
   }
   store.set(phone, { code, expiresAt: now + TTL_MS, attempts: 0, lastSentAt: now });
@@ -70,19 +92,17 @@ export async function issueCode(phone: string): Promise<string> {
 }
 
 export async function checkCode(phone: string, code: string): Promise<VerifyResult> {
-  const sb = getSupabase();
+  const sb = getOtpClient("verify code");
   if (sb) {
-    const { data } = await sb.from("otp_codes").select("*").eq("phone", phone).maybeSingle();
-    const row = data as OtpRow | null;
-    if (!row || Date.now() > new Date(row.expires_at).getTime()) return "expired";
-    if (row.attempts >= MAX_ATTEMPTS) return "too_many";
-    await sb
-      .from("otp_codes")
-      .update({ attempts: row.attempts + 1 })
-      .eq("phone", phone);
-    if (row.code !== code) return "mismatch";
-    await sb.from("otp_codes").delete().eq("phone", phone); // one-time use
-    return "ok";
+    const { data, error } = await sb.rpc("verify_otp_code", {
+      p_phone: phone,
+      p_code: code
+    });
+    checkStorageError("verify and consume code", error);
+    if (data === "ok" || data === "expired" || data === "mismatch" || data === "too_many") {
+      return data;
+    }
+    throw new OtpStorageError("verify and consume code", new Error("Unexpected database result"));
   }
 
   const e = store.get(phone);

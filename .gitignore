@@ -10,6 +10,7 @@ next-env.d.ts
 
 # production
 /build
+/.vercel
 
 # misc
 .DS_Store
@@ -21,10 +22,13 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files (secrets)
-.env
-.env.local
-.env*.local
+.env*
+!.env.example
 
 # editor / os
 .vscode/
 .idea/
+
+# local Codex artifacts
+/work
+/outputs

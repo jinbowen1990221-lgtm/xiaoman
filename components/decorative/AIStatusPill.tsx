@@ -9,10 +9,11 @@ function PillInner({ text, interactive }: { text: string; interactive: boolean }
           follows the star's shape instead of showing a square box while it breathes */}
       <div className="relative h-[28px] w-[28px] shrink-0">
         <Image
-          src="/images/home/star-mascot.png"
+          src="/images/home/star-mascot.webp"
           alt=""
-          width={800}
-          height={800}
+          width={480}
+          height={480}
+          sizes="28px"
           className="star-breathe relative h-full w-full object-contain"
         />
       </div>

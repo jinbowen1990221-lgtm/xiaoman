@@ -1,11 +1,15 @@
 import type { User } from "@/lib/user-types";
 
 export const SESSION_COOKIE = "bob_session";
-const TOKEN_VERSION = "v1";
+const TOKEN_VERSION = "v2";
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
+const DEV_SESSION_SECRET = "xiaoman-dev-secret-change-me";
 
 export type SessionPayload = {
   user: User;
   iat: number;
+  exp: number;
 };
 
 /* ------------------------------------------------------------------
@@ -14,12 +18,27 @@ export type SessionPayload = {
    A tampered or forged token fails verification → treated as logged out.
    Set SESSION_SECRET in production. ------------------------------------ */
 
-function getSecret() {
-  return (
-    process.env.SESSION_SECRET ??
-    // dev-only fallback so local works; MUST be overridden in production
-    "xiaoman-dev-secret-change-me"
-  );
+async function getSecret() {
+  const configured = process.env.SESSION_SECRET?.trim();
+  if (configured && encoder.encode(configured).byteLength >= 32) return configured;
+
+  if (process.env.NODE_ENV === "production") {
+    // Keep production fail-closed without breaking an existing deployment that
+    // already has the high-entropy server-only Supabase key configured. Hashing
+    // derives a one-way, domain-separated signing key: the database credential
+    // itself is never used as the HMAC key and cannot be recovered from it.
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+    if (serviceRoleKey && encoder.encode(serviceRoleKey).byteLength >= 32) {
+      const derived = await crypto.subtle.digest(
+        "SHA-256",
+        encoder.encode(`xiaoman-session-v2\u0000${serviceRoleKey}`)
+      );
+      return bytesToBase64Url(new Uint8Array(derived));
+    }
+    throw new Error("SESSION_SECRET is not configured securely");
+  }
+
+  return configured || DEV_SESSION_SECRET;
 }
 
 const encoder = new TextEncoder();
@@ -35,14 +54,14 @@ async function importKey(secret: string) {
 }
 
 async function sign(data: string): Promise<string> {
-  const key = await importKey(getSecret());
+  const key = await importKey(await getSecret());
   const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(data));
   return bytesToBase64Url(new Uint8Array(sig));
 }
 
 async function verify(data: string, signature: string): Promise<boolean> {
   try {
-    const key = await importKey(getSecret());
+    const key = await importKey(await getSecret());
     return await crypto.subtle.verify(
       "HMAC",
       key,
@@ -55,7 +74,10 @@ async function verify(data: string, signature: string): Promise<boolean> {
 }
 
 export async function createSessionToken(user: User): Promise<string> {
-  const payload = base64UrlEncode(JSON.stringify({ user, iat: Date.now() } satisfies SessionPayload));
+  const issuedAt = Date.now();
+  const payload = base64UrlEncode(
+    JSON.stringify({ user, iat: issuedAt, exp: issuedAt + SESSION_TTL_MS } satisfies SessionPayload)
+  );
   const data = `${TOKEN_VERSION}.${payload}`;
   const signature = await sign(data);
   return `${data}.${signature}`;
@@ -72,7 +94,24 @@ export async function readSessionToken(token?: string | null): Promise<SessionPa
   if (!ok) return null;
 
   try {
-    return JSON.parse(base64UrlDecode(payload)) as SessionPayload;
+    const parsed = JSON.parse(base64UrlDecode(payload)) as Partial<SessionPayload>;
+    const now = Date.now();
+    if (
+      !parsed.user ||
+      typeof parsed.user !== "object" ||
+      typeof parsed.user.id !== "string" ||
+      typeof parsed.user.phone !== "string" ||
+      typeof parsed.iat !== "number" ||
+      typeof parsed.exp !== "number" ||
+      !Number.isFinite(parsed.iat) ||
+      !Number.isFinite(parsed.exp) ||
+      parsed.iat > now + MAX_CLOCK_SKEW_MS ||
+      parsed.exp <= now ||
+      parsed.exp - parsed.iat > SESSION_TTL_MS + MAX_CLOCK_SKEW_MS
+    ) {
+      return null;
+    }
+    return parsed as SessionPayload;
   } catch {
     return null;
   }

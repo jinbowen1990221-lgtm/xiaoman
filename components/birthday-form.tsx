@@ -7,6 +7,7 @@ import { TopNav } from "@/components/top-nav";
 import { WheelColumn } from "@/components/onboarding/wheel-column";
 import { saveOnboarding } from "@/lib/onboarding-client";
 import type { BirthdayType } from "@/lib/user-types";
+import { useOnboardingStore } from "@/store/onboarding-store";
 
 export function BirthdayForm({
   initialBirthday,
@@ -23,6 +24,7 @@ export function BirthdayForm({
   const [day, setDay] = useState(parsed ? Number(parsed[3]) : now.getDate());
   const [birthdayType, setBirthdayType] = useState<BirthdayType>(initialType ?? "solar");
   const [saving, setSaving] = useState(false);
+  const saveError = useOnboardingStore((state) => state.saveError);
 
   const years = useMemo(
     () => Array.from({ length: 81 }, (_, i) => now.getFullYear() - 80 + i),
@@ -35,13 +37,12 @@ export function BirthdayForm({
     if (saving) return;
     setSaving(true);
     const value = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    try {
-      await saveOnboarding({ birthday: value, birthday_type: birthdayType });
-      router.replace("/");
-      router.refresh();
-    } catch {
+    if (!(await saveOnboarding({ birthday: value, birthday_type: birthdayType }))) {
       setSaving(false);
+      return;
     }
+    router.replace("/");
+    router.refresh();
   }
 
   return (
@@ -88,6 +89,11 @@ export function BirthdayForm({
         <p className="mt-3 text-center font-garamond text-[12px] italic text-tertiary">
           — {birthdayType === "solar" ? "阳历" : "农历"}　{year} · {month} · {day} —
         </p>
+        {saveError ? (
+          <p role="alert" className="mt-3 text-center text-[13px] text-[var(--accent-coral)]">
+            {saveError}
+          </p>
+        ) : null}
       </section>
 
       <FixedFooter>

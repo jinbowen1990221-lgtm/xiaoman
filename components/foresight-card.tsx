@@ -33,6 +33,7 @@ export function ForesightCard() {
   const [state, setState] = useState<State | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [verifyError, setVerifyError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -53,12 +54,15 @@ export function ForesightCard() {
   async function verify(id: string, result: "hit" | "partial" | "miss") {
     if (busyId) return;
     setBusyId(id);
+    setVerifyError("");
     try {
-      await fetch("/api/foresight", {
+      const response = await fetch("/api/foresight", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, result })
       });
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? "暂时没存好，请稍后再试");
       setState((prev) =>
         prev
           ? {
@@ -73,7 +77,8 @@ export function ForesightCard() {
             }
           : prev
       );
-    } catch {
+    } catch (error) {
+      setVerifyError(error instanceof Error ? error.message : "暂时没存好，请稍后再试");
       // keep it on screen so they can retry
     } finally {
       setBusyId(null);
@@ -157,6 +162,12 @@ export function ForesightCard() {
           </motion.div>
         ))}
       </AnimatePresence>
+
+      {verifyError ? (
+        <p role="alert" className="mb-3 text-[12px] text-[var(--accent-coral)]">
+          {verifyError}
+        </p>
+      ) : null}
 
       {/* today's fresh prediction */}
       {today ? (

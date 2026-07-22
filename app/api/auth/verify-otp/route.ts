@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { verifyOtp } from "@/lib/auth";
-import { getMockUserByPhone } from "@/lib/mock-user-db";
+import { AUTH_UNAVAILABLE_MESSAGE, verifyOtp } from "@/lib/auth";
 import { getSafeRedirectForUser, SESSION_COOKIE } from "@/lib/session";
 import { sessionCookieOptions } from "@/lib/cookie";
 
@@ -10,21 +9,23 @@ export async function POST(request: Request) {
     code?: string;
   };
   const phone = body.phone ?? "";
-  const existing = await getMockUserByPhone(phone);
-  const result = await verifyOtp(phone, body.code ?? "");
+  try {
+    const result = await verifyOtp(phone, body.code ?? "");
 
-  if (!result.success || !result.token) {
-    return NextResponse.json(result, { status: 400 });
+    if (!result.success || !result.token || !result.user) {
+      return NextResponse.json(result, { status: 400 });
+    }
+
+    const response = NextResponse.json({
+      success: true,
+      isNewUser: result.isNewUser,
+      onboardingCompleted: Boolean(result.user.onboarding_completed),
+      nextPath: getSafeRedirectForUser(result.user)
+    });
+    response.cookies.set(SESSION_COOKIE, result.token, sessionCookieOptions);
+    return response;
+  } catch (error) {
+    console.error("[AUTH] verify OTP failed", error);
+    return NextResponse.json({ success: false, error: AUTH_UNAVAILABLE_MESSAGE }, { status: 503 });
   }
-
-  const user = await getMockUserByPhone(phone);
-  const response = NextResponse.json({
-    success: true,
-    token: result.token,
-    isNewUser: !existing,
-    onboardingCompleted: Boolean(user?.onboarding_completed),
-    nextPath: user ? getSafeRedirectForUser(user) : "/onboarding/intro"
-  });
-  response.cookies.set(SESSION_COOKIE, result.token, sessionCookieOptions);
-  return response;
 }

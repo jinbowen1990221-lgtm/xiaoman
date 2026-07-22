@@ -18,6 +18,10 @@ export type SmsResult = { ok: boolean; reason?: string };
 
 export async function sendSms(phone: string, code: string): Promise<SmsResult> {
   if (!smsEnabled()) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[SMS] provider is not configured");
+      return { ok: false, reason: "短信服务未配置" };
+    }
     console.log(`[小满 DEV OTP] ${phone}: ${code}`);
     return { ok: true };
   }
@@ -84,13 +88,16 @@ async function sendAliyun(phone: string, code: string): Promise<SmsResult> {
   const signature = await hmacSha1Base64(`${accessKeySecret}&`, stringToSign);
 
   const body = `Signature=${percentEncode(signature)}&${sortedQuery}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8_000);
   const res = await fetch("https://dysmsapi.aliyuncs.com/", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body
-  });
+    body,
+    signal: controller.signal
+  }).finally(() => clearTimeout(timeout));
   const data = (await res.json().catch(() => ({}))) as { Code?: string; Message?: string };
-  if (data.Code !== "OK") {
+  if (!res.ok || data.Code !== "OK") {
     console.error("[SMS] aliyun:", data.Code, data.Message);
     return { ok: false, reason: `${data.Code ?? "未知"}｜${data.Message ?? ""}`.trim() };
   }

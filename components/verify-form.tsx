@@ -20,6 +20,7 @@ export function VerifyForm() {
   const [seconds, setSeconds] = useState(60);
   const [error, setError] = useState("");
   const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
   const code = useMemo(() => digits.join(""), [digits]);
 
   useEffect(() => {
@@ -72,37 +73,58 @@ export function VerifyForm() {
 
   async function verify(nextCode: string) {
     setVerifying(true);
-    const response = await fetch("/api/auth/verify-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, code: nextCode })
-    });
-    const data = (await response.json().catch(() => ({}))) as {
-      onboardingCompleted?: boolean;
-      nextPath?: string;
-      error?: string;
-    };
-    setVerifying(false);
+    try {
+      const response = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, code: nextCode })
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        onboardingCompleted?: boolean;
+        nextPath?: string;
+        error?: string;
+      };
 
-    if (!response.ok) {
-      setError(data.error ?? "验证码不对，再试一次");
+      if (response.ok) {
+        router.replace(data.nextPath ?? (data.onboardingCompleted ? "/" : "/onboarding/intro"));
+        router.refresh();
+        return;
+      }
+
+      setError(data.error ?? "验证码服务暂时不可用，请稍后再试");
       setDigits(Array(CODE_LENGTH).fill(""));
       inputRefs.current[0]?.focus();
       await controls.start({ x: [-4, 4, -4, 4, 0], transition: { duration: 0.2 } });
-      return;
+    } catch {
+      setError("网络有点慢，请稍后再试");
+      setDigits(Array(CODE_LENGTH).fill(""));
+      inputRefs.current[0]?.focus();
+    } finally {
+      setVerifying(false);
     }
-
-    router.replace(data.nextPath ?? (data.onboardingCompleted ? "/" : "/onboarding/intro"));
   }
 
   async function resend() {
-    if (seconds > 0) return;
-    await fetch("/api/auth/send-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone })
-    });
-    setSeconds(60);
+    if (seconds > 0 || resending) return;
+    setError("");
+    setResending(true);
+    try {
+      const response = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone })
+      });
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        setError(data.error ?? "暂时没发出去，请稍后再试");
+        return;
+      }
+      setSeconds(60);
+    } catch {
+      setError("网络有点慢，请稍后再试");
+    } finally {
+      setResending(false);
+    }
   }
 
   return (
@@ -164,10 +186,11 @@ export function VerifyForm() {
           ) : (
             <button
               type="button"
+              disabled={resending}
               onClick={resend}
-              className="text-[13px] font-light text-[var(--accent-coral)] underline underline-offset-4"
+              className="text-[13px] font-light text-[var(--accent-coral)] underline underline-offset-4 disabled:opacity-50"
             >
-              重新发送
+              {resending ? "正在发送" : "重新发送"}
             </button>
           )}
           {error ? (

@@ -14,7 +14,7 @@ export default function OnboardingNamePage() {
 
   async function submit() {
     if (!valid) return;
-    await saveOnboarding({ nickname: nickname.trim() });
+    if (!(await saveOnboarding({ nickname: nickname.trim() }))) return;
     router.push("/onboarding/birthday");
   }
 

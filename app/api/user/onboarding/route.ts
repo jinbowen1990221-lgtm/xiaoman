@@ -17,11 +17,16 @@ export async function PATCH(request: Request) {
     ...sanitizePatch(body),
     ...(nextStep ? { onboarding_step: nextStep } : {})
   } as OnboardingPatch;
-  const user = await updateMockUser(currentUser.phone, patch);
-  const token = await createSessionToken(user);
-  const response = NextResponse.json({ user });
-  response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions);
-  return response;
+  try {
+    const user = await updateMockUser(currentUser.phone, patch);
+    const token = await createSessionToken(user);
+    const response = NextResponse.json({ user });
+    response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions);
+    return response;
+  } catch (error) {
+    console.error("[onboarding-api] save failed", error);
+    return NextResponse.json({ error: "暂时没存好，请稍后再试" }, { status: 503 });
+  }
 }
 
 function getNextStep(body: OnboardingPatch) {

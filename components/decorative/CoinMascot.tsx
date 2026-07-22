@@ -12,7 +12,7 @@ export function CoinMascot({
   /** When idle (no result) on a blank coin, engrave the first option on the coin. */
   options?: [string, string];
 }) {
-  const src = face === "blank" ? "/images/home/coin-blank.png" : "/images/home/coin-star.png";
+  const src = face === "blank" ? "/images/home/coin-blank.webp" : "/images/home/coin-star.webp";
 
   // text shown on the coin: result after flip, else the first option while idle
   const engraved = result ?? options?.[0] ?? null;
@@ -33,8 +33,8 @@ export function CoinMascot({
       <Image
         src={src}
         alt=""
-        width={1168}
-        height={1158}
+        width={480}
+        height={476}
         unoptimized
         className="h-full w-full object-contain"
       />

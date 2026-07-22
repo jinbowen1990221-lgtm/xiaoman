@@ -30,15 +30,18 @@ export function OnboardingShell({
 }: OnboardingShellProps) {
   const router = useRouter();
   const hydrateFromUser = useOnboardingStore((state) => state.hydrateFromUser);
+  const saveError = useOnboardingStore((state) => state.saveError);
+  const setSaveError = useOnboardingStore((state) => state.setSaveError);
 
   useEffect(() => {
+    setSaveError("");
     void fetch("/api/user/me")
       .then((response) => (response.ok ? response.json() : null))
       .then((data: { user?: Parameters<typeof hydrateFromUser>[0] } | null) => {
         if (data?.user) hydrateFromUser(data.user);
       })
       .catch(() => undefined);
-  }, [hydrateFromUser]);
+  }, [hydrateFromUser, setSaveError]);
 
   return (
     <div className="relative min-h-dvh pb-32 pt-3">
@@ -108,6 +111,11 @@ export function OnboardingShell({
 
         {eyebrow ? (
           <p className="eyebrow mt-6 block text-center">{eyebrow}</p>
+        ) : null}
+        {saveError ? (
+          <p role="alert" className="mt-3 text-center text-[13px] text-[var(--accent-coral)]">
+            {saveError}
+          </p>
         ) : null}
       </header>
 

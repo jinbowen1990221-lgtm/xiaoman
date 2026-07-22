@@ -75,10 +75,11 @@ export default async function TodayPage() {
 
           {/* bottle illustration — smaller, shifted further right to give more room to the text */}
           <Image
-            src="/images/home/bottle-stars.png"
+            src="/images/home/bottle-stars.webp"
             alt=""
             width={482}
             height={517}
+            sizes="200px"
             priority
             className="home-float pointer-events-none absolute -right-8 top-4 z-0 h-[220px] w-[200px] object-contain drop-shadow-[0_14px_26px_rgba(180,150,100,0.24)]"
           />
@@ -134,10 +135,11 @@ export default async function TodayPage() {
             DAY ONE
           </p>
           <Image
-            src="/images/home/bottle-stars.png"
+            src="/images/home/bottle-stars.webp"
             alt=""
             width={482}
             height={517}
+            sizes="175px"
             priority
             className="home-float pointer-events-none absolute -right-10 top-6 z-0 h-[190px] w-[175px] object-contain opacity-90 drop-shadow-[0_14px_26px_rgba(180,150,100,0.22)]"
           />

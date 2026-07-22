@@ -1,0 +1,7 @@
+/work
+/outputs
+/.next
+/node_modules
+/.git
+/.vercel
+*.zip

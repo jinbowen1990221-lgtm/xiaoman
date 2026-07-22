@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/check-static-assets.mjs",
     "build": "next build",
+    "check:assets": "node scripts/check-static-assets.mjs",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"

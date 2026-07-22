@@ -14,7 +14,9 @@ type OnboardingData = {
 };
 
 interface OnboardingState extends OnboardingData {
+  saveError: string;
   setField: <K extends keyof OnboardingData>(key: K, value: OnboardingData[K]) => void;
+  setSaveError: (message: string) => void;
   hydrateFromUser: (user: User) => void;
   reset: () => void;
 }
@@ -31,7 +33,9 @@ const initialState: OnboardingData = {
 
 export const useOnboardingStore = create<OnboardingState>((set) => ({
   ...initialState,
+  saveError: "",
   setField: (key, value) => set({ [key]: value } as Pick<OnboardingData, typeof key>),
+  setSaveError: (message) => set({ saveError: message }),
   hydrateFromUser: (user) =>
     set({
       nickname: user.nickname ?? "",
@@ -42,5 +46,5 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
       remindTime: user.remind_time ?? "22:00",
       remindEnabled: user.remind_enabled
     }),
-  reset: () => set(initialState)
+  reset: () => set({ ...initialState, saveError: "" })
 }));

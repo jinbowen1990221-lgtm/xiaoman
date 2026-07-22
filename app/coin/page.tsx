@@ -27,6 +27,8 @@ export default function CoinPage() {
   const [flips, setFlips] = useState(0);
   const [resultKey, setResultKey] = useState<"a" | "b" | null>(null);
   const [coinFlipId, setCoinFlipId] = useState<string | null>(null);
+  const [savingFlip, setSavingFlip] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const coinResult = resultKey === "a" ? optionA || "A" : resultKey === "b" ? optionB || "B" : null;
 
   async function decide() {
@@ -53,12 +55,15 @@ export default function CoinPage() {
   }
 
   function flipCoin() {
+    if (savingFlip) return;
     setShowCoin(true);
     const nextKey = Math.random() > 0.5 ? "a" : "b";
     const nextResult = nextKey === "a" ? optionA || "A" : optionB || "B";
     setFlips((c) => c + 1);
     setResultKey(nextKey);
     setCoinFlipId(null);
+    setSaveError("");
+    setSavingFlip(true);
     setLastCoinResult(nextResult);
     window.setTimeout(() => void persistCoinFlip(nextKey), 1000);
   }
@@ -75,26 +80,37 @@ export default function CoinPage() {
           bob_comment: `硬币替你选了 ${resultValue === "a" ? optionA : optionB}`
         })
       });
-      const data = (await response.json().catch(() => null)) as { id?: string } | null;
-      if (data?.id) setCoinFlipId(data.id);
-    } catch {
-      // silent
+      const data = (await response.json().catch(() => null)) as { id?: string; error?: string } | null;
+      if (!response.ok || !data?.id) {
+        throw new Error(data?.error ?? "暂时没记住这次结果，请稍后再试");
+      }
+      setCoinFlipId(data.id);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "暂时没记住这次结果，请稍后再试");
+    } finally {
+      setSavingFlip(false);
     }
   }
 
   async function done() {
-    if (coinFlipId) {
-      try {
-        await fetch("/api/coin-flip", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: coinFlipId, followed: true })
-        });
-      } catch {
-        // silent
-      }
+    if (savingFlip) return;
+    if (!coinFlipId) {
+      setSaveError("这次结果还没有保存，请重新抛一次");
+      return;
     }
-    router.push("/");
+    setSaveError("");
+    try {
+      const response = await fetch("/api/coin-flip", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: coinFlipId, followed: true })
+      });
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? "暂时没记住这次结果，请稍后再试");
+      router.push("/");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "暂时没记住这次结果，请稍后再试");
+    }
   }
 
   const leanA = decision?.lean === "a";
@@ -218,18 +234,25 @@ export default function CoinPage() {
                 <button
                   type="button"
                   onClick={flipCoin}
-                  className="rounded-full border border-white/70 bg-[rgba(255,251,243,0.66)] px-5 py-2 text-[13px] font-light text-primary shadow-[var(--card-shadow)] active:scale-[0.97]"
+                  disabled={savingFlip}
+                  className="rounded-full border border-white/70 bg-[rgba(255,251,243,0.66)] px-5 py-2 text-[13px] font-light text-primary shadow-[var(--card-shadow)] active:scale-[0.97] disabled:opacity-50"
                 >
                   再抛一次
                 </button>
                 <button
                   type="button"
                   onClick={() => void done()}
-                  className="rounded-full bg-[var(--btn-dark)] px-5 py-2 text-[13px] font-medium text-white shadow-[0_8px_18px_rgba(42,37,32,0.18)] active:scale-[0.97]"
+                  disabled={savingFlip || !coinFlipId}
+                  className="rounded-full bg-[var(--btn-dark)] px-5 py-2 text-[13px] font-medium text-white shadow-[0_8px_18px_rgba(42,37,32,0.18)] active:scale-[0.97] disabled:opacity-50"
                 >
-                  好，就这样
+                  {savingFlip ? "保存中…" : "好，就这样"}
                 </button>
               </div>
+              {saveError ? (
+                <p className="mt-3 text-[13px] text-[var(--accent-coral)]" role="alert">
+                  {saveError}
+                </p>
+              ) : null}
             </motion.div>
           ) : null}
         </AnimatePresence>

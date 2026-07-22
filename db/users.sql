@@ -1,3 +1,6 @@
+-- 已弃用：这是早期局部结构，缺少 notes、predictions、otp_codes 及安全权限。
+-- 新建或恢复数据库请执行 db/schema.sql；保留本文件仅用于追溯旧版本。
+
 create table if not exists users (
   id uuid primary key,
   phone varchar(20) unique not null,

@@ -16,6 +16,7 @@ export function NoteResult() {
   const selectedWord = params.get("choice") ?? storedWord ?? "转机";
   const [feedback, setFeedback] = useState<FeedbackType>(null);
   const [busy, setBusy] = useState(false);
+  const [saveError, setSaveError] = useState("");
   // null while 小满 is composing the omen from the user's real records
   const [omen, setOmen] = useState<{ text: string; possibility: number } | null>(null);
 
@@ -43,22 +44,31 @@ export function NoteResult() {
     };
   }, [selectedWord]);
 
-  function accept() {
+  async function accept() {
     if (busy || !omen) return;
     setBusy(true);
-    setFeedback("accepted");
-    void fetch("/api/notes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        choice: selectedWord,
-        text: omen.text,
-        possibility: omen.possibility
-      })
-    }).catch(() => undefined);
-    window.setTimeout(() => {
-      router.push("/");
-    }, 1800);
+    setSaveError("");
+    try {
+      const response = await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          choice: selectedWord,
+          text: omen.text,
+          possibility: omen.possibility
+        })
+      });
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? "暂时没收好，请稍后再试");
+
+      setFeedback("accepted");
+      window.setTimeout(() => {
+        router.push("/");
+      }, 1800);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "暂时没收好，请稍后再试");
+      setBusy(false);
+    }
   }
 
   function leave() {
@@ -114,7 +124,7 @@ export function NoteResult() {
         </button>
         <button
           type="button"
-          onClick={accept}
+          onClick={() => void accept()}
           disabled={busy || !omen}
           className="bob-button-dark disabled:opacity-50"
         >
@@ -125,6 +135,11 @@ export function NoteResult() {
       <p className="mt-3 text-center font-garamond text-[12px] italic text-tertiary">
         收下后小满会替你记着 · 在「回看 · 收下的预感」里能再翻到
       </p>
+      {saveError ? (
+        <p className="mt-2 text-center text-[13px] text-[var(--accent-coral)]" role="alert">
+          {saveError}
+        </p>
+      ) : null}
 
       {/* Accept feedback overlay */}
       <AnimatePresence>

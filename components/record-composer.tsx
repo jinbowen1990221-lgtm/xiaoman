@@ -187,7 +187,8 @@ export function RecordComposer({ userId = "anon" }: { userId?: string }) {
         signal: controller.signal
       });
       window.clearTimeout(timeout);
-      if (!res.ok) throw new Error("save-failed");
+      const responseBody = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(responseBody.error ?? "暂时没存好，请稍后再试");
       // Record is in. Go straight to the "小满 is writing" state — no separate
       // "已收下" flash — then swap in the reflection when it arrives.
       if (mode === "text") setText("");
@@ -196,9 +197,9 @@ export function RecordComposer({ userId = "anon" }: { userId?: string }) {
       setResponseState("writing");
       setIsSubmitting(false);
       void composeReflection(savedContent);
-    } catch {
+    } catch (error) {
       window.clearTimeout(timeout);
-      setToast("没收住，等一下再交给我？");
+      setToast(error instanceof Error ? error.message : "没收住，等一下再交给我？");
       setIsSubmitting(false);
     }
   }

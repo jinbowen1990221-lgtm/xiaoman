@@ -14,9 +14,9 @@ export default function OnboardingThoughtPage() {
 
   async function submit(skip = false) {
     if (skip) {
-      await saveOnboarding({ initial_thought: "" });
+      if (!(await saveOnboarding({ initial_thought: "" }))) return;
     } else if (text.trim()) {
-      await saveOnboarding({ initial_thought: text.trim() });
+      if (!(await saveOnboarding({ initial_thought: text.trim() }))) return;
     }
     router.push("/onboarding/remind");
   }

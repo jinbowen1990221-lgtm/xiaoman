@@ -22,10 +22,10 @@ export default function OnboardingRemindPage() {
   }
 
   async function submit(enabled = remindEnabled) {
-    await saveOnboarding({
+    if (!(await saveOnboarding({
       remind_time: remindTime,
       remind_enabled: enabled
-    });
+    }))) return;
     router.push("/onboarding/done");
   }
 

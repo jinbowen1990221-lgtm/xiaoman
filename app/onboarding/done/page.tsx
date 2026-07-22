@@ -12,7 +12,7 @@ import { useOnboardingStore } from "@/store/onboarding-store";
 export default function OnboardingDonePage() {
   const router = useRouter();
   const nickname = useOnboardingStore((state) => state.nickname);
-  const savePromise = useRef<Promise<unknown> | null>(null);
+  const savePromise = useRef<Promise<boolean> | null>(null);
   const [going, setGoing] = useState<null | "record" | "home">(null);
 
   useEffect(() => {
@@ -25,10 +25,10 @@ export default function OnboardingDonePage() {
     if (going) return;
     setGoing(target);
     // ensure the cookie is updated before navigating, else middleware bounces back
-    try {
-      await savePromise.current;
-    } catch {
-      // continue anyway
+    const saved = await savePromise.current;
+    if (!saved) {
+      setGoing(null);
+      return;
     }
     router.replace(target === "record" ? "/record" : "/");
   }

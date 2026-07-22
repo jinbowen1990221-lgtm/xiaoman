@@ -13,9 +13,46 @@ import type {
    Data access layer.
    - If Supabase is configured (SUPABASE_URL + SERVICE_ROLE_KEY),
      reads/writes go to Postgres.
-   - Otherwise falls back to an in-memory store (dev/demo).
+   - Local development falls back to an in-memory store.
+   - Production fails closed when Supabase is unavailable so writes never look
+     successful when they were only stored in a short-lived server process.
    All functions are async so the call sites are storage-agnostic.
    ============================================================ */
+
+export class PersistenceError extends Error {
+  readonly operation: string;
+  readonly originalError: unknown;
+
+  constructor(operation: string, originalError: unknown) {
+    super(`Persistence unavailable during ${operation}`);
+    this.name = "PersistenceError";
+    this.operation = operation;
+    this.originalError = originalError;
+  }
+}
+
+function failPersistence(operation: string, error: unknown): never {
+  console.error(`[persistence] ${operation} failed`, error);
+  throw new PersistenceError(operation, error);
+}
+
+function getPersistenceClient(operation: string) {
+  const client = getSupabase();
+  if (!client && process.env.NODE_ENV === "production") {
+    failPersistence(operation, new Error("Supabase is not configured"));
+  }
+  return client;
+}
+
+function checkSupabaseError(operation: string, error: unknown) {
+  if (error) failPersistence(operation, error);
+}
+
+function requireSupabaseData<T>(operation: string, data: T | null, error: unknown): T {
+  checkSupabaseError(operation, error);
+  if (data === null) failPersistence(operation, new Error("Supabase returned no row"));
+  return data;
+}
 
 const globalForUsers = globalThis as unknown as {
   __bobUsers?: Map<string, User>;
@@ -39,9 +76,10 @@ globalForUsers.__bobPredictions = predictionsStore;
 /* ---------------- users ---------------- */
 
 export async function getMockUserByPhone(phone: string): Promise<User | null> {
-  const sb = getSupabase();
+  const sb = getPersistenceClient("read user");
   if (sb) {
-    const { data } = await sb.from("users").select("*").eq("phone", phone).maybeSingle();
+    const { data, error } = await sb.from("users").select("*").eq("phone", phone).maybeSingle();
+    checkSupabaseError("read user", error);
     return (data as User) ?? null;
   }
   return users.get(phone) ?? null;
@@ -66,12 +104,12 @@ export async function getOrCreateMockUser(phone: string): Promise<User> {
     updated_at: now
   };
 
-  const sb = getSupabase();
+  const sb = getPersistenceClient("create user");
   if (sb) {
     const existing = await getMockUserByPhone(phone);
     if (existing) return existing;
-    const { data } = await sb.from("users").insert(draft).select("*").single();
-    return (data as User) ?? draft;
+    const { data, error } = await sb.from("users").insert(draft).select("*").single();
+    return requireSupabaseData("create user", data as User | null, error);
   }
 
   // in-memory: keep the demo shortcut so 13900000000 is a ready onboarded user
@@ -90,15 +128,15 @@ export async function getOrCreateMockUser(phone: string): Promise<User> {
 }
 
 export async function updateMockUser(phone: string, patch: OnboardingPatch): Promise<User> {
-  const sb = getSupabase();
+  const sb = getPersistenceClient("update user");
   if (sb) {
-    const { data } = await sb
+    const { data, error } = await sb
       .from("users")
       .update({ ...patch, updated_at: new Date().toISOString() })
       .eq("phone", phone)
       .select("*")
       .single();
-    return data as User;
+    return requireSupabaseData("update user", data as User | null, error);
   }
   const current = await getOrCreateMockUser(phone);
   const next: User = { ...current, ...patch, updated_at: new Date().toISOString() };
@@ -122,25 +160,26 @@ export async function createCoinFlip(
     followed: null,
     created_at: new Date().toISOString()
   };
-  const sb = getSupabase();
+  const sb = getPersistenceClient("create coin flip");
   if (sb) {
-    const { data } = await sb.from("coin_flips").insert(coinFlip).select("*").single();
-    return (data as CoinFlip) ?? coinFlip;
+    const { data, error } = await sb.from("coin_flips").insert(coinFlip).select("*").single();
+    return requireSupabaseData("create coin flip", data as CoinFlip | null, error);
   }
   coinFlips.unshift(coinFlip);
   return coinFlip;
 }
 
 export async function updateCoinFlipFollowed(userId: string, id: string, followed: boolean): Promise<CoinFlip | null> {
-  const sb = getSupabase();
+  const sb = getPersistenceClient("update coin flip");
   if (sb) {
-    const { data } = await sb
+    const { data, error } = await sb
       .from("coin_flips")
       .update({ followed })
       .eq("id", id)
       .eq("user_id", userId)
       .select("*")
       .maybeSingle();
+    checkSupabaseError("update coin flip", error);
     return (data as CoinFlip) ?? null;
   }
   const coinFlip = coinFlips.find((item) => item.id === id && item.user_id === userId);
@@ -150,14 +189,15 @@ export async function updateCoinFlipFollowed(userId: string, id: string, followe
 }
 
 export async function getCoinFlipsForUser(userId: string, limit = 20): Promise<CoinFlip[]> {
-  const sb = getSupabase();
+  const sb = getPersistenceClient("list coin flips");
   if (sb) {
-    const { data } = await sb
+    const { data, error } = await sb
       .from("coin_flips")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(limit);
+    checkSupabaseError("list coin flips", error);
     return (data as CoinFlip[]) ?? [];
   }
   return coinFlips.filter((item) => item.user_id === userId).slice(0, limit);
@@ -179,24 +219,25 @@ export async function createRecord(
     mood: input.mood ?? null,
     created_at: new Date().toISOString()
   };
-  const sb = getSupabase();
+  const sb = getPersistenceClient("create record");
   if (sb) {
-    const { data } = await sb.from("records").insert(record).select("*").single();
-    return (data as StoredRecord) ?? record;
+    const { data, error } = await sb.from("records").insert(record).select("*").single();
+    return requireSupabaseData("create record", data as StoredRecord | null, error);
   }
   recordsStore.unshift(record);
   return record;
 }
 
 export async function getRecordsForUser(userId: string, limit = 100): Promise<StoredRecord[]> {
-  const sb = getSupabase();
+  const sb = getPersistenceClient("list records");
   if (sb) {
-    const { data } = await sb
+    const { data, error } = await sb
       .from("records")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(limit);
+    checkSupabaseError("list records", error);
     return (data as StoredRecord[]) ?? [];
   }
   return recordsStore.filter((item) => item.user_id === userId).slice(0, limit);
@@ -216,24 +257,25 @@ export async function createNote(
     possibility: input.possibility,
     created_at: new Date().toISOString()
   };
-  const sb = getSupabase();
+  const sb = getPersistenceClient("create note");
   if (sb) {
-    const { data } = await sb.from("notes").insert(note).select("*").single();
-    return (data as StoredNote) ?? note;
+    const { data, error } = await sb.from("notes").insert(note).select("*").single();
+    return requireSupabaseData("create note", data as StoredNote | null, error);
   }
   notesStore.unshift(note);
   return note;
 }
 
 export async function getNotesForUser(userId: string, limit = 50): Promise<StoredNote[]> {
-  const sb = getSupabase();
+  const sb = getPersistenceClient("list notes");
   if (sb) {
-    const { data } = await sb
+    const { data, error } = await sb
       .from("notes")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(limit);
+    checkSupabaseError("list notes", error);
     return (data as StoredNote[]) ?? [];
   }
   return notesStore.filter((item) => item.user_id === userId).slice(0, limit);
@@ -256,10 +298,10 @@ export async function createPrediction(
     created_at: new Date().toISOString(),
     verified_at: null
   };
-  const sb = getSupabase();
+  const sb = getPersistenceClient("create prediction");
   if (sb) {
-    const { data } = await sb.from("predictions").insert(prediction).select("*").single();
-    return (data as StoredPrediction) ?? prediction;
+    const { data, error } = await sb.from("predictions").insert(prediction).select("*").single();
+    return requireSupabaseData("create prediction", data as StoredPrediction | null, error);
   }
   predictionsStore.unshift(prediction);
   return prediction;
@@ -269,14 +311,15 @@ export async function getPredictionsForUser(
   userId: string,
   limit = 30
 ): Promise<StoredPrediction[]> {
-  const sb = getSupabase();
+  const sb = getPersistenceClient("list predictions");
   if (sb) {
-    const { data } = await sb
+    const { data, error } = await sb
       .from("predictions")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(limit);
+    checkSupabaseError("list predictions", error);
     return (data as StoredPrediction[]) ?? [];
   }
   return predictionsStore.filter((item) => item.user_id === userId).slice(0, limit);
@@ -288,15 +331,16 @@ export async function updatePredictionStatus(
   status: PredictionStatus
 ): Promise<StoredPrediction | null> {
   const verified_at = new Date().toISOString();
-  const sb = getSupabase();
+  const sb = getPersistenceClient("update prediction");
   if (sb) {
-    const { data } = await sb
+    const { data, error } = await sb
       .from("predictions")
       .update({ status, verified_at })
       .eq("id", id)
       .eq("user_id", userId)
       .select("*")
-      .single();
+      .maybeSingle();
+    checkSupabaseError("update prediction", error);
     return (data as StoredPrediction) ?? null;
   }
   const found = predictionsStore.find((p) => p.id === id && p.user_id === userId);
