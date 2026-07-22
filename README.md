@@ -58,23 +58,6 @@
 | AI 能力 | OpenAI 兼容接口，本地启发式逻辑兜底 |
 | 部署与终端 | Vercel、Web App Manifest |
 
-## 本地启动
-
-建议使用 Node.js 20 LTS 和仓库内的 `package-lock.json`：
-
-```bash
-git clone https://github.com/jinbowen1990221-lgtm/xiaoman.git
-cd xiaoman
-
-npm ci
-cp .env.example .env.local
-npm run dev
-```
-
-本地开发服务器默认运行在 [http://localhost:3000](http://localhost:3000)。
-
-未配置 Supabase 和短信服务时，本地开发会使用进程内存存储，并可使用 `.env.example` 中的开发验证码。开发服务器重启后，内存数据会消失；生产环境不会启用这些开发兜底。
-
 ## 环境变量
 
 将 `.env.example` 复制为 `.env.local`，再按需要填写：
